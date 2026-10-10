@@ -19,7 +19,10 @@
     "new": "Nuova",
     "default": "Predef.",
     "set_default": "Imposta come libreria predefinita",
-    "default_hint": "Aperta all'avvio"
+    "default_hint": "Aperta all'avvio",
+    "rename": "Rinomina",
+    "rename_desc": "Cambia il nome della libreria",
+    "rename_title": "Rinomina la libreria"
   },
   "home": {
     "ready": "Pronto all'ascolto",
@@ -246,7 +249,9 @@
     "history_cleared_desc": "I brani recenti sono stati rimossi",
     "plays_n": "{n} ascolti",
     "plays_one": "{n} ascolto",
-    "rules": "Regole"
+    "rules": "Regole",
+    "sort_order": "Ordine",
+    "sort_album": "Album"
   },
   "actions": {
     "play_now": "Riproduci ora",
@@ -752,7 +757,9 @@
     "accent_pink": "Rosa",
     "accent_red": "Rosso",
     "accent_orange": "Arancione",
-    "accent_amber": "Ambra"
+    "accent_amber": "Ambra",
+    "sidebar_playlists": "Playlist",
+    "sidebar_playlists_desc": "Le playlist fissate, Brani preferiti e Ascoltati di recente"
   },
   "about": {
     "title": "Informazioni",
@@ -1331,6 +1338,7 @@
     "add_files_desc": "Qualche brano, senza cartella",
     "folders": "Cartelle monitorate",
     "covers": "Recupera copertine",
+    "covers_desc": "Copertine mancanti, da Deezer",
     "covers_missing_one": "1 album senza copertina",
     "covers_missing_n": "{n} album senza copertina",
     "covers_ok": "Ogni album ha la sua copertina",

@@ -39,6 +39,8 @@ const libraryId = $derived($libraryStore.librarySelected?.id ?? null);
 const favorisActifs = $derived($settingsStore.show_favorites !== 'false');
 const montrerLikes = $derived(favorisActifs && $settingsStore.show_liked_in_playlists !== 'false');
 const montrerRecents = $derived($settingsStore.show_recent_in_playlists !== 'false');
+// Toute la section (Apparence → Barre latérale) : playlists épinglées, likés, récents.
+const montrerPlaylists = $derived($settingsStore.show_sidebar_playlists !== 'false');
 const montrerBoutonsOuvrir = $derived($settingsStore.show_open_buttons === 'true');
 
 // Pastille sur le « … » quand un raccourci est masqué : c'est là qu'on le retrouve.
@@ -156,6 +158,7 @@ onMount(() => {
              ? 'flex-1 min-h-0 w-full items-center gap-2 py-2 overflow-y-auto overflow-x-hidden [scrollbar-width:none]'
              : 'flex-[1_0_140px] min-h-35 gap-0.5 -mx-2 px-2 pb-8 overflow-y-auto overflow-x-hidden smart-scroll sb-liste-fondu'}"
   >
+    {#if montrerPlaylists}
     {#if !replie}
       <SidebarTitre titre={$t('nav.playlists')} aide={$t('playlists_view.all')} onclick={() => nav('/playlists')}>
         {#snippet actions()}
@@ -216,6 +219,7 @@ onMount(() => {
           <SidebarVignette couvertures={$couverturesPlaylists.recent ?? []} couleur="#0ea5e9" icone="material-symbols:history-rounded" />
         {/snippet}
       </SidebarLigne>
+    {/if}
     {/if}
 
     {#if libraryId != null}

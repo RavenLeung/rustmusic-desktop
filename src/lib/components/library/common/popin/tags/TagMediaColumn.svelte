@@ -59,23 +59,21 @@
     {disabled}
     title={label}
     aria-label={label}
-    class="w-6 h-6 shrink-0 rounded-md flex items-center justify-center
-           cursor-pointer transition-colors
-           text-neutral-400 dark:text-neutral-500
+    class="w-6 h-6 shrink-0 rounded-lg flex items-center justify-center
+           cursor-pointer transition-colors text-(--rg-mu2)
            disabled:opacity-25 disabled:cursor-not-allowed
            {danger
-             ? 'hover:text-red-500 hover:bg-red-500/12'
-             : 'hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-500/12'}"
+             ? 'hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/8'
+             : 'hover:text-(--rg-g) hover:bg-(--rg-gbg)'}"
   >
     <Icon {icon} width="12" />
   </button>
 {/snippet}
 
 <div
-  class="relative group aspect-square rounded-xl overflow-hidden shrink-0
-         ring-1 ring-black/5 dark:ring-white/10
-         shadow-lg shadow-black/10 dark:shadow-black/50
-         bg-neutral-200/60 dark:bg-white/5"
+  class="relative group aspect-square rounded-2xl overflow-hidden shrink-0
+         border border-(--rg-bd) bg-(--rg-s2)
+         shadow-lg shadow-black/10 dark:shadow-black/50"
 >
   {#if coverSlot}
     <img src={coverSlot.src} alt="" class="w-full h-full object-cover" />
@@ -89,7 +87,7 @@
     >
       <!-- Fond opaque : le contraste élevé neutralise les `backdrop-filter`. -->
       <span
-        class="flex items-center gap-1.5 px-2.5 h-7 rounded-lg text-[11px] font-medium
+        class="flex items-center gap-1.5 px-2.5 h-7 rounded-lg text-[11px] font-semibold
                bg-black/75 text-white ring-1 ring-white/25"
       >
         <Icon icon="lucide:maximize-2" width="11" />
@@ -100,9 +98,9 @@
     {#if coverSlot.picture_type === PICTURE_TYPE_COVER}
       <span
         class="absolute top-2 left-2 pointer-events-none
-               flex items-center gap-1 px-1.5 py-0.5 rounded-md
+               flex items-center gap-1 px-1.5 py-0.5 rounded-lg
                text-[10px] font-bold uppercase tracking-wider
-               bg-emerald-500 text-white shadow-md shadow-black/30"
+               bg-(--rg-g) text-(--rg-on-g) shadow-md shadow-black/30"
       >
         <Icon icon="lucide:star" width="9" />
         {$t('tags.cover')}
@@ -114,13 +112,11 @@
       onclick={onadd}
       disabled={busy || submitting}
       class="w-full h-full flex flex-col items-center justify-center gap-2
-             cursor-pointer transition-colors
-             text-neutral-400 dark:text-neutral-500
-             hover:text-emerald-600 dark:hover:text-emerald-400
-             hover:bg-emerald-500/8 disabled:opacity-50"
+             cursor-pointer transition-colors text-(--rg-mu)
+             hover:text-(--rg-g) hover:bg-(--rg-gbg) disabled:opacity-50"
     >
       <Icon icon="lucide:image-plus" width="26" />
-      <span class="text-[11px] font-medium">{$t('tags.add_image')}</span>
+      <span class="text-[11px] font-semibold">{$t('tags.add_image')}</span>
     </button>
   {/if}
 </div>
@@ -129,13 +125,11 @@
      et laisse la place aux cinq actions. -->
 <div class="shrink-0">
   <div class="mb-1.5 flex items-center gap-1.5">
-    <span class="text-[10px] font-semibold uppercase tracking-[0.09em]
-                 text-neutral-400 dark:text-neutral-500">
+    <span class="text-[11px] font-bold uppercase tracking-[0.1em] text-(--rg-mu)">
       {$t('tags.media')}
     </span>
-    <span class="px-1 rounded text-[10px] tabular-nums
-                 bg-neutral-200/70 dark:bg-white/10
-                 text-neutral-500 dark:text-neutral-400">
+    <span class="px-1.5 rounded-md font-mono text-[10px] font-bold tabular-nums
+                 bg-(--rg-s2) text-(--rg-tx2)">
       {slots.length}
     </span>
     <span class="flex-1"></span>
@@ -146,11 +140,9 @@
         disabled={busy || submitting}
         title={$t('tags.add_image')}
         aria-label={$t('tags.add_image')}
-        class="w-6 h-6 rounded-md flex items-center justify-center
-               cursor-pointer transition-colors
-               text-neutral-400 dark:text-neutral-500
-               hover:text-emerald-600 dark:hover:text-emerald-400
-               hover:bg-emerald-500/12 disabled:opacity-30"
+        class="w-6 h-6 rounded-lg flex items-center justify-center
+               cursor-pointer transition-colors text-(--rg-mu2)
+               hover:text-(--rg-g) hover:bg-(--rg-gbg) disabled:opacity-30"
       >
         <Icon icon={busy ? 'lucide:loader-circle' : 'lucide:plus'}
               width="13" class={busy ? 'animate-spin' : ''} />
@@ -159,27 +151,26 @@
   </div>
 
   {#if slots.length === 0}
-    <p class="text-[11px] text-neutral-400 dark:text-neutral-500">
+    <p class="text-[11px] text-(--rg-mu)">
       {$t('tags.no_media')}
     </p>
   {:else}
     <div class="space-y-1">
       {#each slots as slot, i (slot.key)}
         <div
-          class="flex gap-2 p-1.5 rounded-lg transition-colors
-                 hover:bg-neutral-200/50 dark:hover:bg-white/5
+          class="flex gap-2 p-1.5 rounded-xl border transition-colors
                  {slot.picture_type === PICTURE_TYPE_COVER
-                   ? 'bg-emerald-500/10'
-                   : ''}"
+                   ? 'bg-(--rg-creux-on) border-(--rg-gbd)'
+                   : 'border-transparent hover:bg-(--rg-s2)'}"
         >
           <button
             type="button"
             onclick={() => onzoom(slot)}
             title={$t('tags.zoom')}
-            class="w-11 h-11 shrink-0 rounded overflow-hidden cursor-zoom-in ring-1
+            class="w-11 h-11 shrink-0 rounded-lg overflow-hidden cursor-zoom-in ring-1
                    {slot.picture_type === PICTURE_TYPE_COVER
-                     ? 'ring-emerald-500/60'
-                     : 'ring-black/10 dark:ring-white/10'}"
+                     ? 'ring-(--rg-g)/60'
+                     : 'ring-(--rg-bd)'}"
           >
             <img src={slot.src} alt="" class="w-full h-full object-cover" />
           </button>
@@ -188,16 +179,16 @@
             <p
               class="text-[11px] truncate
                      {slot.picture_type === PICTURE_TYPE_COVER
-                       ? 'font-medium text-emerald-600 dark:text-emerald-400'
-                       : 'text-neutral-600 dark:text-neutral-300'}"
+                       ? 'font-semibold text-(--rg-gtx)'
+                       : 'font-medium text-(--rg-tx2)'}"
             >
               {typeLabel(slot.picture_type)}
             </p>
-            <p class="text-[10px] truncate text-neutral-400 dark:text-neutral-500">
+            <p class="text-[10px] truncate text-(--rg-mu)">
               {slot.mime_type.replace('image/', '').toUpperCase()} · {formatBytes(slot.bytes)}
               {#if slot.recompressed && slot.originalBytes}
                 <span title="{formatBytes(slot.originalBytes)} → {formatBytes(slot.bytes)}"
-                      class="text-amber-500">· {$t('tags.reduced')}</span>
+                      class="text-(--rg-am)">· {$t('tags.reduced')}</span>
               {/if}
             </p>
 
@@ -246,18 +237,17 @@
 </div>
 
 <!-- Identité du fichier, juste sous les médias : collée en bas elle flottait dans le vide. -->
-<div class="pt-3 shrink-0 border-t border-neutral-200/70 dark:border-white/8">
+<div class="pt-3 shrink-0 border-t border-(--rg-bd)">
   <p
-    class="text-[11px] font-medium text-neutral-600 dark:text-neutral-300 break-all line-clamp-2"
+    class="text-[11.5px] font-semibold text-(--rg-tx2) break-all line-clamp-2"
     title={path}
   >
     {filename}
   </p>
   <div class="mt-1.5 flex flex-wrap gap-1">
     {#if extension}
-      <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wide
-                   bg-neutral-200/70 dark:bg-white/10
-                   text-neutral-500 dark:text-neutral-400">
+      <span class="px-1.5 py-0.5 rounded-md font-mono text-[10px] font-bold tracking-wide
+                   bg-(--rg-s2) border border-(--rg-bd) text-(--rg-mu)">
         {extension}
       </span>
     {/if}
@@ -266,9 +256,8 @@
     {#if mediaBytes > 0}
       <span
         title="{$t('tags.media')} · {formatBytes(mediaBytes)}"
-        class="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium
-               bg-neutral-200/70 dark:bg-white/10
-               text-neutral-500 dark:text-neutral-400"
+        class="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold
+               bg-(--rg-s2) border border-(--rg-bd) text-(--rg-mu)"
       >
         <Icon icon="lucide:image" width="9" />
         {formatBytes(mediaBytes)}

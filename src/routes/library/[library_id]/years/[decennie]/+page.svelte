@@ -214,7 +214,7 @@ const grilleCartes = "grid grid-cols-[repeat(auto-fill,minmax(176px,1fr))] gap-x
     {@render mosaique("w-8.5 h-8.5 rounded-[7px]!", true)}
     <b class="truncate text-[15px] text-(--rg-tx)">{titre}</b>
   {/snippet}
-  {#snippet barre()}<ViewModeSwitch class="bg-(--rg-carte)/80" />{/snippet}
+  {#snippet barre()}<SelectionToggle avecLibelle /><ViewModeSwitch class="bg-(--rg-carte)/80" />{/snippet}
 
     <!-- ─── En-tête ─── -->
     <div class="relative flex flex-wrap items-end gap-8 pt-3 pb-6" style="--gc: oklch(0.7 0.17 {h})">

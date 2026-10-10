@@ -138,9 +138,8 @@ pub async fn get_replay_gain_settings(
     })
 }
 
-/// Applique et persiste les réglages. Effet immédiat sur le **prochain**
-/// morceau : le facteur du morceau en cours n'est pas recalculé, pour éviter
-/// un saut de volume en pleine écoute.
+/// Applique et persiste les réglages. Le morceau en cours suit aussitôt : on
+/// règle le préampli en écoutant.
 #[tauri::command]
 pub async fn set_replay_gain_settings(
     state: State<'_, AppState>,
@@ -163,6 +162,7 @@ pub async fn set_replay_gain_settings(
 
     replay_gain::set_mode(parsed);
     replay_gain::set_preamp_db(preamp);
+    replay_gain::refresh_current();
     log::info!(
         "🔊 Replay Gain updated : mode={:?}, préampli={:+.1} dB",
         parsed, preamp

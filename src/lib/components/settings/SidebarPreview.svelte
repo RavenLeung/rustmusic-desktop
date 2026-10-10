@@ -2,7 +2,7 @@
   // Barre latérale en miniature : ses sections suivent les interrupteurs voisins.
   import { t } from "#lib/i18n";
 
-  let { ouvrir, albums, artistes }: { ouvrir: boolean; albums: boolean; artistes: boolean } = $props();
+  let { ouvrir, playlists, albums, artistes }: { ouvrir: boolean; playlists: boolean; albums: boolean; artistes: boolean } = $props();
 
   const case_ = "bg-[#ebe7df] dark:bg-[#1b211e]";
   const barre = "h-1.25 flex-1 rounded-[3px] bg-[#d8d3c8] dark:bg-[#2a312d]";
@@ -32,11 +32,13 @@
       <span class="h-5.5 rounded-[5px] {i === 0 ? 'bg-(--rg-gbg) border border-(--rg-gbd)' : case_}"></span>
     {/each}
   </div>
-  <div class="flex flex-col gap-1 pt-1.5">
-    <em class="not-italic {titre}">{$t("nav.playlists")}</em>
-    {@render ligne(55, false)}
-    {@render ligne(290, false, "60%")}
-  </div>
+  {#if playlists}
+    <div class="flex flex-col gap-1 pt-1.5">
+      <em class="not-italic {titre}">{$t("nav.playlists")}</em>
+      {@render ligne(55, false)}
+      {@render ligne(290, false, "60%")}
+    </div>
+  {/if}
   {#if albums}
     <div class="flex flex-col gap-1 pt-1.5">
       <em class="not-italic {titre}">{$t("library.albums")}</em>

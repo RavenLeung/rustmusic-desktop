@@ -132,6 +132,28 @@ impl CpalSymphoniaOutput {
                             } else {
                                 output.fill(0.0);
                             }
+
+                            // Enchaînement sans blanc : la piste finit au milieu de ce
+                            // tampon, on prend la suivante ici même pour le compléter,
+                            // au lieu de laisser des zéros jusqu'au fil de contrôle.
+                            if samples_read < output.len()
+                                && crate::core::audio_player::preload::gapless_enabled()
+                            {
+                                if let Ok(mut fb) = full_buffer_data.try_write() {
+                                    let cursor: usize = full_buffer_cursor.load(Ordering::Relaxed);
+                                    if cursor >= fb.len()
+                                        && crate::core::audio_player::preload::promote_from_callback(
+                                            &mut fb,
+                                        )
+                                    {
+                                        let n = fb.len().min(output.len() - samples_read);
+                                        output[samples_read..samples_read + n]
+                                            .copy_from_slice(&fb[..n]);
+                                        full_buffer_cursor.store(n, Ordering::Release);
+                                        samples_read += n;
+                                    }
+                                }
+                            }
                         } else {
                             output.fill(0.0);
                         }

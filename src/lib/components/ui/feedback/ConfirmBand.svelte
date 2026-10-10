@@ -25,20 +25,20 @@
 </script>
 
 {#if open}
-  <div class="shrink-0 flex items-center gap-3 px-4 py-2.5
-              bg-amber-500/10 border-t border-amber-500/25"
+  <div class="shrink-0 flex items-center gap-3 px-6 py-2.5
+              bg-(--rg-ambg) border-t border-(--rg-ambd)"
        transition:fade={{ duration: 120 }}>
-    <Icon icon="lucide:triangle-alert" width="14" class="shrink-0 text-amber-500" />
-    <span class="flex-1 min-w-0 text-[11.5px] text-amber-700 dark:text-amber-300">
+    <Icon icon="lucide:triangle-alert" width="15" class="shrink-0 text-(--rg-am)" />
+    <span class="flex-1 min-w-0 text-[12px] font-medium text-(--rg-amtx)">
       {@render children()}
     </span>
     <button
       type="button"
       onclick={oncancel}
       disabled={busy}
-      class="px-3 h-7 rounded-lg text-[12px] cursor-pointer transition-colors
-             text-amber-700 dark:text-amber-300 hover:bg-amber-500/15
-             disabled:opacity-50"
+      class="px-3.5 h-8 rounded-xl text-[12px] font-semibold cursor-pointer transition-colors
+             text-(--rg-amtx) hover:bg-(--rg-am)/15
+             disabled:opacity-50 disabled:cursor-default"
     >
       {cancelLabel}
     </button>
@@ -46,12 +46,13 @@
       type="button"
       onclick={onconfirm}
       disabled={busy}
-      class="flex items-center gap-1.5 px-3 h-7 rounded-lg text-[12px] font-medium
-             cursor-pointer transition-colors
-             bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50"
+      class="flex items-center gap-1.5 px-3.5 h-8 rounded-xl text-[12px] font-bold
+             cursor-pointer transition
+             bg-(--rg-am) text-(--rg-ambg) hover:brightness-110
+             disabled:opacity-50 disabled:cursor-default"
     >
       {#if busy}
-        <Icon icon="lucide:loader-circle" width="12" class="animate-spin" />
+        <Icon icon="lucide:loader-circle" width="13" class="animate-spin" />
       {/if}
       {confirmLabel}
     </button>

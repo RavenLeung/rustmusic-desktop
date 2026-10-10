@@ -175,8 +175,7 @@ fn parse_card(object: &Value) -> Option<(u32, Card)> {
         return None;
     }
     let info = &object["info"];
-    let index = &info["props"]["api.alsa.card"];
-    let index = index.as_u64().or_else(|| index.as_str()?.parse().ok())? as u32;
+    let index = number(&info["props"]["api.alsa.card"])?;
     let profiles = info["params"]["EnumProfile"]
         .as_array()?
         .iter()
@@ -191,6 +190,40 @@ fn parse_card(object: &Value) -> Option<(u32, Card)> {
             profiles,
         },
     ))
+}
+
+/// Certaines versions de PipeWire écrivent les index ALSA en texte.
+fn number(value: &Value) -> Option<u32> {
+    value.as_u64().map(|n| n as u32).or_else(|| value.as_str()?.parse().ok())
+}
+
+/// Carte et périphérique ALSA de la sortie PipeWire qui porte ce nom. Le nom vient
+/// souvent de la base USB (« Fiio E10 ») et pas de la carte (« DigiHug USB Audio »).
+pub fn alsa_pcm_for(name: &str) -> Option<(u32, u32)> {
+    let output = Command::new("pw-dump").output().ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    let objects: Vec<Value> = serde_json::from_slice(&output.stdout).ok()?;
+    objects.iter().find_map(|o| parse_alsa_sink(o, name))
+}
+
+fn parse_alsa_sink(object: &Value, name: &str) -> Option<(u32, u32)> {
+    if object["type"] != "PipeWire:Interface:Node" {
+        return None;
+    }
+    let props = &object["info"]["props"];
+    if props["media.class"] != "Audio/Sink" {
+        return None;
+    }
+    // Le nom affiché peut porter le fabricant : « Nom (Fabricant) ».
+    let desc = props["node.description"].as_str()?;
+    if name != desc && !name.starts_with(&format!("{desc} (")) {
+        return None;
+    }
+    let card = number(&props["api.alsa.pcm.card"]).or_else(|| number(&props["alsa.card"]))?;
+    let device = number(&props["api.alsa.pcm.device"]).or_else(|| number(&props["alsa.device"])).unwrap_or(0);
+    Some((card, device))
 }
 
 /// `save: false` : WirePlumber ne garde pas ce profil d'une session à l'autre.
@@ -267,6 +300,27 @@ mod tests {
         assert_eq!((index, card.id, card.profile.as_str()), (3, 79, "output:analog-stereo"));
         assert_eq!(card.device, "alsa_card.usb-Fosi_Audio_Fosi_Audio_K7-00");
         assert_eq!(card.profiles, vec![(0, "off".to_string()), (1, "output:analog-stereo".to_string())]);
+    }
+
+    #[test]
+    fn finds_alsa_pcm_behind_a_usb_database_name() {
+        let node: Value = serde_json::from_str(
+            r#"{ "id": 61, "type": "PipeWire:Interface:Node", "info": { "props": {
+                "media.class": "Audio/Sink", "node.description": "Fiio E10 Stéréo analogique",
+                "api.alsa.pcm.card": "2", "api.alsa.pcm.device": "0" } } }"#,
+        )
+        .unwrap();
+        assert_eq!(parse_alsa_sink(&node, "Fiio E10 Stéréo analogique"), Some((2, 0)));
+        assert_eq!(parse_alsa_sink(&node, "Fiio E10 Stéréo analogique (FiiO)"), Some((2, 0)));
+        assert_eq!(parse_alsa_sink(&node, "Fiio E10"), None);
+
+        // HDMI d'un contrôleur Intel : même carte, périphérique 3.
+        let hdmi: Value = serde_json::from_str(
+            r#"{ "id": 70, "type": "PipeWire:Interface:Node", "info": { "props": {
+                "media.class": "Audio/Sink", "node.description": "HDMI 1", "alsa.card": 0, "alsa.device": 3 } } }"#,
+        )
+        .unwrap();
+        assert_eq!(parse_alsa_sink(&hdmi, "HDMI 1"), Some((0, 3)));
     }
 
     #[test]

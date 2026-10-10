@@ -1,5 +1,7 @@
 <script lang="ts">
+  import Icon from "@iconify/svelte";
   import { popinStore } from "#lib/stores/ui/popin.store";
+  import PopinFooter from "#lib/components/ui/popin/PopinFooter.svelte";
 
   let {
     message = "",
@@ -18,7 +20,8 @@
   } = $props();
 
   let isLoading = $state(false);
-  
+  const danger = $derived(variant === "danger");
+
   async function handleConfirm() {
     isLoading = true;
     try {
@@ -30,7 +33,7 @@
       isLoading = false;
     }
   }
-  
+
   async function handleCancel() {
     isLoading = true;
     try {
@@ -44,43 +47,29 @@
   }
 </script>
 
-<div class="space-y-6">
-  <!-- Message -->
-  <p class="text-sm text-neutral-600 dark:text-neutral-400">
+<!-- Message, précédé d'une pastille teintée selon la gravité -->
+<div class="flex items-start gap-3.5">
+  <span
+    class="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center border
+           {danger
+             ? 'bg-red-500/8 border-red-500/25 text-red-600 dark:text-red-400'
+             : 'bg-(--rg-gbg) border-(--rg-gbd) text-(--rg-g)'}"
+  >
+    <Icon icon={danger ? "material-symbols:warning-outline-rounded" : "material-symbols:help-outline-rounded"} width="20" />
+  </span>
+  <p class="pt-2 text-sm leading-relaxed text-(--rg-tx2) text-pretty">
     {message}
   </p>
-  
-  <!-- Actions -->
-  <div class="flex gap-3 justify-end">
-    <button
-      type="button"
-      class="px-4 py-2 text-sm font-medium rounded-md
-             text-neutral-700 bg-neutral-100 
-             hover:bg-neutral-200
-             dark:text-neutral-300 dark:bg-neutral-800 
-             dark:hover:bg-neutral-700
-             transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-      onclick={handleCancel}
-      disabled={isLoading}
-    >
-      {cancelText}
-    </button>
-    
-    <button
-      type="button"
-      class="px-4 py-2 text-sm font-medium rounded-md text-white
-             transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed
-             {variant === 'danger'
-               ? 'bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700'
-               : 'bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700'}"
-      onclick={handleConfirm}
-      disabled={isLoading}
-    >
-      {#if isLoading}
-        <span class="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-      {:else}
-        {confirmText}
-      {/if}
-    </button>
-  </div>
 </div>
+
+<PopinFooter
+  bleed
+  cancelLabel={cancelText}
+  oncancel={handleCancel}
+  cancelDisabled={isLoading}
+  submitLabel={confirmText}
+  submitIcon={danger ? "material-symbols:delete-outline-rounded" : "material-symbols:check-rounded"}
+  onsubmit={handleConfirm}
+  busy={isLoading}
+  tone={danger ? "danger" : "accent"}
+/>

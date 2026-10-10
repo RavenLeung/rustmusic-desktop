@@ -16,11 +16,9 @@
   } = $props();
 </script>
 
-<div class="shrink-0 flex items-center gap-2 px-4 py-2
-            border-b border-neutral-200/70 dark:border-white/8">
+<div class="shrink-0 flex items-center gap-2 px-4 py-2 border-b border-(--rg-bd)">
   {#if filled.length > 0}
-    <span class="flex-1 min-w-0 flex items-center gap-1.5 text-[11px] truncate
-                 text-emerald-600 dark:text-emerald-400"
+    <span class="flex-1 min-w-0 flex items-center gap-1.5 text-[11px] font-medium truncate text-(--rg-gtx)"
           transition:fade={{ duration: 120 }}>
       <Icon icon="lucide:sparkles" width="11" class="shrink-0" />
       <!-- Les champs sont nommés : « 6 champs » laisserait chercher lesquels. -->
@@ -33,10 +31,9 @@
     type="button"
     onclick={onfetch}
     {disabled}
-    class="shrink-0 flex items-center gap-1.5 px-2.5 h-7 rounded-lg text-[11.5px]
-           cursor-pointer transition-colors disabled:opacity-40
-           text-emerald-600 dark:text-emerald-400
-           hover:bg-emerald-500/12"
+    class="shrink-0 flex items-center gap-1.5 px-3 h-8 rounded-xl text-[12px] font-semibold
+           cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-default
+           border border-(--rg-gbd) bg-(--rg-gbg) text-(--rg-gtx) hover:border-(--rg-g)"
   >
     <Icon icon="lucide:cloud-download" width="12" />
     {$t('source.fetch')}

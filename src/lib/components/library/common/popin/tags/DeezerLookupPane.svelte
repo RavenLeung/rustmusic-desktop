@@ -33,21 +33,20 @@
 </script>
 
 <div class="flex-1 min-h-0 flex flex-col">
-  <div class="shrink-0 flex items-center gap-2.5 px-4 py-2.5
-              border-b border-neutral-200/70 dark:border-white/8">
-    <Icon icon="lucide:cloud-download" width="14"
-          class="shrink-0 text-emerald-600 dark:text-emerald-400" />
-    <span class="flex-1 min-w-0 text-[12.5px] font-medium truncate
-                 text-neutral-800 dark:text-neutral-100">
+  <div class="shrink-0 flex items-center gap-2.5 px-4 py-2.5 border-b border-(--rg-bd)">
+    <span class="w-7 h-7 shrink-0 rounded-[9px] border flex items-center justify-center
+                 bg-(--rg-gbg) border-(--rg-gbd) text-(--rg-g)">
+      <Icon icon="lucide:cloud-download" width="14" />
+    </span>
+    <span class="flex-1 min-w-0 text-[13px] font-bold truncate text-(--rg-tx)">
       {$t('source.title')}
     </span>
     <button
       type="button"
       onclick={onclose}
-      class="flex items-center gap-1.5 px-2 h-7 rounded-lg text-[11.5px]
+      class="flex items-center gap-1.5 px-3 h-8 rounded-xl text-[12px] font-semibold
              cursor-pointer transition-colors
-             text-neutral-500 dark:text-neutral-400
-             hover:bg-neutral-200/70 dark:hover:bg-white/8"
+             text-(--rg-tx2) hover:bg-(--rg-hover) hover:text-(--rg-tx)"
     >
       <Icon icon="lucide:x" width="12" />
       {$t('source.back_to_fields')}

@@ -5,7 +5,7 @@ import Icon from "@iconify/svelte";
 import { t, currentLocale } from "#lib/i18n";
 import { playlistStore } from "#lib/stores/playlist/playlist.store";
 import { settingsStore } from "#lib/stores/settings/settings.store";
-import { likedCount } from "#lib/stores/playlist/like.store";
+import { liked, likedCount } from "#lib/stores/playlist/like.store";
 import { recentCount } from "#lib/stores/recent/recent.store";
 import { popinStore } from "#lib/stores/ui/popin.store";
 import { viewMode } from "#lib/stores/ui/viewMode.store";
@@ -17,6 +17,13 @@ import MenuSelect from "#lib/components/ui/menu/MenuSelect.svelte";
 import ViewModeSwitch from "#lib/components/ui/input/ViewModeSwitch.svelte";
 import EmptyResult from "#lib/components/ui/feedback/EmptyResult.svelte";
 import PlaylistCard from "#lib/components/playlist/PlaylistCard.svelte";
+import SelectionToggle from "#lib/components/ui/selection/SelectionToggle.svelte";
+import { selectionStore } from "#lib/stores/ui/selection.store";
+import { cleGroupe, toggleGroupSelection, toggleTracksGroup } from "#lib/helper/tools/selectionGroups";
+import { invoke } from "@tauri-apps/api/core";
+import { get } from "svelte/store";
+import type { TrackListView } from "#lib/types/ui/library/track/TrackListView";
+import type { RecentFileListView } from "#lib/types/ui/recent/RecentFileListView";
 import PlaylistContextMenu from "#lib/components/ui/contextmenu/PlaylistContextMenu.svelte";
 import AddPlaylistPopin from "#lib/components/playlist/popin/AddPlaylistPopin.svelte";
 import SmartPlaylistPopin from "#lib/components/playlist/smart/SmartPlaylistPopin.svelte";
@@ -73,6 +80,18 @@ function nouvelle() {
 function nouvelleAuto() {
   popinStore.open($t("playlist.new_smart"), SmartPlaylistPopin, {}, { size: "xl", icon: "lucide:sparkles", flush: true });
 }
+
+// ─── Sélection : une playlist cochée apporte tous ses titres ───
+const LIKED_KEY = "liked";
+const RECENT_KEY = "recent";
+const playlistKey = (id: number) => cleGroupe("playlist", 0, String(id));
+const tracksByPaths = (paths: string[]) => invoke<TrackListView[]>("get_tracks_view_by_paths", { paths });
+const selectLiked = () => toggleTracksGroup(LIKED_KEY, () => tracksByPaths([...get(liked).paths]));
+const selectRecent = () =>
+  toggleTracksGroup(RECENT_KEY, async () => {
+    const files = await invoke<RecentFileListView[]>("get_recent_files");
+    return tracksByPaths(files.map((f) => f.path).filter((x): x is string => !!x));
+  });
 </script>
 
 <div class="biblio-maquette flex flex-col h-full">
@@ -122,6 +141,7 @@ function nouvelleAuto() {
                     { value: "size", label: $t("playlists_view.sort_size"), icon: "material-symbols:format-list-numbered-rounded" },
                     { value: "sidebar", label: $t("playlists_view.sort_sidebar"), icon: "material-symbols:side-navigation-rounded" },
                   ]} />
+      <SelectionToggle avecLibelle />
       <ViewModeSwitch />
     </div>
   </div>
@@ -136,17 +156,20 @@ function nouvelleAuto() {
           {#if montrerLikes}
             <PlaylistCard liste={!grille} href="/playlist/liked" nom={$t("playlist_page.liked_title")}
                           sousTitre={`${$t("sidebar.playlist")} · ${titres($likedCount)}`}
-                          couleur="#f43f5e" icone="material-symbols:favorite-rounded" couvertures={$couverturesPlaylists.liked ?? []} />
+                          couleur="#f43f5e" icone="material-symbols:favorite-rounded" couvertures={$couverturesPlaylists.liked ?? []}
+                          selected={$selectionStore.groupes.has(LIKED_KEY)} onselect={selectLiked} />
           {/if}
           <PlaylistCard liste={!grille} href="/playlist/recent" nom={$t("playlist_page.recent_title")}
                         sousTitre={`${$t("sidebar.history")} · ${titres($recentCount)}`}
-                        couleur="#0ea5e9" icone="material-symbols:history-rounded" couvertures={$couverturesPlaylists.recent ?? []} />
+                        couleur="#0ea5e9" icone="material-symbols:history-rounded" couvertures={$couverturesPlaylists.recent ?? []}
+                        selected={$selectionStore.groupes.has(RECENT_KEY)} onselect={selectRecent} />
         {/if}
         {#each visibles as p (p.id)}
           <PlaylistCard liste={!grille} href={`/playlist/${p.id}`} nom={p.name} sousTitre={sousTitre(p)}
                         couleur={p.color} icone={p.icon} auto={p.is_smart} couvertures={$couverturesPlaylists[`playlist:${p.id}`] ?? []}
                         epinglee={p.pinned} onepingler={() => playlistStore.setPinned(p.id, !p.pinned)}
-                        onmenu={(x, y) => (menu = { x, y, playlist: p })} />
+                        onmenu={(x, y) => (menu = { x, y, playlist: p })}
+                        selected={$selectionStore.groupes.has(playlistKey(p.id))} onselect={() => toggleGroupSelection("playlist", 0, String(p.id))} />
         {/each}
       </div>
       {#if playlists.length === 0}

@@ -19,6 +19,14 @@ pub const INDEX_COMPAT_0_2_4: &str =
 
 impl LibraryAlbumRepository {
 
+    /// Retire l'index de compatibilité quand il refuse un album légitime : deux
+    /// compilations du même titre dans deux dossiers. Le démarrage ne le reposera
+    /// pas tant que ces doublons existent.
+    pub async fn drop_compat_index(conn: &mut sqlx::SqliteConnection) -> Result<(), sqlx::Error> {
+        sqlx::query("DROP INDEX IF EXISTS idx_la_compat_0_2_4").execute(&mut *conn).await?;
+        Ok(())
+    }
+
     /// Pose l'album, ou rend celui qui existe déjà.
     ///
     /// Deux unicités cohabitent : la nôtre, `(bibliothèque, titre, dossier)`,

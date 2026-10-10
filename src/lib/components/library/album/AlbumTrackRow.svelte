@@ -23,6 +23,8 @@ let {
     sousTitre = null,
     numero = null,
     marque = false,
+    onremove,
+    removeLabel,
 }: {
     libraryId: number;
     track: TrackListView;
@@ -39,6 +41,9 @@ let {
     numero?: number | null;
     /** Le titre de la page (fiche d'un morceau) : fond marqué. */
     marque?: boolean;
+    /** « Retirer » dans le menu contextuel (playlist, likés). */
+    onremove?: (track: TrackListView) => void;
+    removeLabel?: string;
 } = $props();
 
 let contextMenu = $state<{ x: number; y: number } | null>(null);
@@ -136,5 +141,6 @@ const ib = "w-8.5 h-8.5 shrink-0 flex items-center justify-center rounded-[9px] 
 </div>
 
 {#if contextMenu}
-    <TrackContextMenu {track} x={contextMenu.x} y={contextMenu.y} {libraryId} showNavigation={true} onclose={() => (contextMenu = null)} />
+    <TrackContextMenu {track} x={contextMenu.x} y={contextMenu.y} {libraryId} showNavigation={true} onclose={() => (contextMenu = null)}
+                      showDelete={!!onremove} deleteLabel={removeLabel} ondelete={() => onremove?.(track)} />
 {/if}

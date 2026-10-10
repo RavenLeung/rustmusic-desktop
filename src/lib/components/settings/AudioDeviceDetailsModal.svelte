@@ -4,6 +4,7 @@
   import { invoke } from "@tauri-apps/api/core";
   import { t, currentLocale } from "#lib/i18n";
   import { portal } from "#lib/helper/portal";
+  import Badge from "#lib/components/ui/text/Badge.svelte";
   import {
     formatSampleRate,
     type AudioDeviceInfo,
@@ -64,17 +65,17 @@
   }
 
   function bitDepthTone(fmt: string): string {
-    if (fmt.includes("32-bit float")) return "text-emerald-500 dark:text-emerald-400";
+    if (fmt.includes("32-bit float")) return "text-(--rg-gtx)";
     if (fmt.includes("32-bit") || fmt.includes("24-bit"))
-      return "text-emerald-500 dark:text-emerald-400";
-    if (fmt.includes("16-bit")) return "text-sky-500 dark:text-sky-400";
-    return "text-neutral-500 dark:text-neutral-400";
+      return "text-(--rg-gtx)";
+    if (fmt.includes("16-bit")) return "text-sky-700 dark:text-sky-400";
+    return "text-(--rg-mu)";
   }
 
   function rateTone(hz: number): string {
-    if (hz >= 352_800) return "text-purple-500 dark:text-purple-400";
-    if (hz >= 88_200) return "text-amber-500 dark:text-amber-400";
-    return "text-neutral-500 dark:text-neutral-400";
+    if (hz >= 352_800) return "text-purple-700 dark:text-purple-300";
+    if (hz >= 88_200) return "text-(--rg-am)";
+    return "text-(--rg-mu)";
   }
 
   function rateCategory(hz: number): string {
@@ -120,7 +121,7 @@
 <div
   role="presentation"
   class="fixed inset-0 z-60 flex items-center justify-center
-         bg-black/60 backdrop-blur-sm p-4"
+         bg-black/60 backdrop-blur-sm"
   transition:fade={{ duration: 150 }}
   onclick={onClose}
 >
@@ -129,104 +130,100 @@
     aria-labelledby="device-modal-title"
     aria-modal="true"
     tabindex="-1"
-    class="w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col
-           rounded-2xl border shadow-2xl
-           bg-white border-neutral-200
-           dark:bg-neutral-900 dark:border-white/10"
+    class="flex flex-col w-full max-w-2xl mx-4 max-h-[88vh]
+           rounded-2xl overflow-hidden text-(--rg-tx)
+           bg-(--rg-carte) border border-(--rg-bd) dark:border-[#2a312d]
+           shadow-[0_24px_60px_-12px_rgba(0,0,0,0.25)] dark:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.9)]"
     transition:scale={{ duration: 180, start: 0.96 }}
     onclick={(e) => e.stopPropagation()}
     onkeydown={(e) => e.stopPropagation()}
   >
-    <!-- Header -->
-    <div class="px-6 pt-5 pb-4 border-b border-neutral-100 dark:border-white/5">
-      <div class="flex items-start gap-3">
-        <div
-          class="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center
-                 {device.isDefault
-                   ? 'bg-emerald-500/15 text-emerald-500 dark:text-emerald-400'
-                   : 'bg-neutral-100 dark:bg-white/5 text-neutral-500 dark:text-neutral-400'}"
+    <!-- En-tête : même bandeau que les popins -->
+    <div
+      class="shrink-0 px-6 pt-5 pb-4 border-b border-(--rg-bd)
+             bg-linear-135 from-(--rg-g)/8 to-transparent to-60%"
+    >
+      <div class="flex items-center justify-between gap-3">
+        <h3
+          id="device-modal-title"
+          class="flex items-center gap-2.5 min-w-0
+                 text-[17px] font-extrabold tracking-[-0.01em] text-(--rg-tx)"
         >
-          <Icon icon={device.isHires ? "lucide:zap" : "lucide:speaker"} width="22" />
-        </div>
-        <div class="flex-1 min-w-0">
-          <h3
-            id="device-modal-title"
-            class="text-base font-semibold text-neutral-900 dark:text-white truncate"
+          <span
+            class="shrink-0 w-8 h-8 rounded-[9px] flex items-center justify-center
+                   bg-(--rg-gbg) text-(--rg-g) border border-(--rg-gbd)"
           >
-            {device.displayName}
-          </h3>
-          <div class="mt-1 flex items-center gap-1.5 flex-wrap">
-            {#if device.isDefault}
-              <span class="text-[9px] px-1.5 py-0.5 rounded font-semibold
-                           bg-emerald-500/15 text-emerald-600 dark:text-emerald-400
-                           uppercase tracking-wider">
-                {$t("settings.audio_devices_default_badge")}
-              </span>
-            {/if}
-            {#if device.isHires}
-              <span class="text-[9px] px-1.5 py-0.5 rounded font-semibold
-                           bg-amber-500/15 text-amber-600 dark:text-amber-300
-                           uppercase tracking-wider">
-                {$t("settings.audio_devices_rate_hires")}
-              </span>
-            {/if}
-            {#if device.manufacturer}
-              <span class="text-[11px] text-neutral-500 dark:text-neutral-400">
-                {device.manufacturer}
-              </span>
-            {/if}
-          </div>
-        </div>
+            <Icon icon={device.isHires ? "lucide:zap" : "lucide:speaker"} width="15" />
+          </span>
+          <span class="truncate">{device.displayName}</span>
+        </h3>
         <button
-          class="shrink-0 p-1.5 rounded-lg cursor-pointer text-neutral-400 hover:text-neutral-800
-                 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors"
+          type="button"
+          class="shrink-0 -mr-1.5 w-8 h-8 rounded-[9px] flex items-center justify-center
+                 cursor-pointer text-(--rg-mu) hover:text-(--rg-tx) hover:bg-(--rg-hover)
+                 transition-colors"
           onclick={onClose}
           aria-label={$t("common.close")}
         >
-          <Icon icon="lucide:x" width="16" />
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
         </button>
       </div>
+      {#if device.isDefault || device.isHires || device.manufacturer}
+        <div class="mt-2 pl-10.5 flex items-center gap-1.5 flex-wrap">
+          {#if device.isDefault}
+            <Badge tone="green">{$t("settings.audio_devices_default_badge")}</Badge>
+          {/if}
+          {#if device.isHires}
+            <Badge tone="amber">{$t("settings.audio_devices_rate_hires")}</Badge>
+          {/if}
+          {#if device.manufacturer}
+            <span class="text-[12px] text-(--rg-mu)">{device.manufacturer}</span>
+          {/if}
+        </div>
+      {/if}
     </div>
 
-    <!-- Scroll body -->
-    <div class="overflow-y-auto scrollbar-app px-6 py-5 space-y-6">
+    <!-- Corps défilant -->
+    <div class="flex-1 min-h-0 overflow-y-auto scrollbar-app px-6 py-5 space-y-6">
       <!-- Identité -->
       <section>
-        <p class="text-[10px] font-semibold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-2">
+        <p class="mb-2 text-[11px] font-bold uppercase tracking-[0.1em] text-(--rg-mu)">
           {$t("settings.audio_devices_identity")}
         </p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div class="p-3 rounded-lg bg-neutral-50 dark:bg-white/3 border border-neutral-200/70 dark:border-white/5">
-            <p class="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 font-semibold mb-1">
+          <div class="p-3.5 rounded-xl bg-(--rg-creux) border border-(--rg-bd)">
+            <p class="mb-1 text-[10.5px] font-bold uppercase tracking-[0.08em] text-(--rg-mu2)">
               {$t("settings.audio_devices_raw_name")}
             </p>
-            <p class="text-xs font-mono text-neutral-700 dark:text-neutral-300 break-all">
+            <p class="text-xs font-mono text-(--rg-tx2) break-all">
               {device.name}
             </p>
           </div>
           {#if device.manufacturer}
-            <div class="p-3 rounded-lg bg-neutral-50 dark:bg-white/3 border border-neutral-200/70 dark:border-white/5">
-              <p class="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 font-semibold mb-1">
+            <div class="p-3.5 rounded-xl bg-(--rg-creux) border border-(--rg-bd)">
+              <p class="mb-1 text-[10.5px] font-bold uppercase tracking-[0.08em] text-(--rg-mu2)">
                 {$t("settings.audio_devices_manufacturer")}
               </p>
-              <p class="text-xs text-neutral-700 dark:text-neutral-300">{device.manufacturer}</p>
+              <p class="text-[13px] text-(--rg-tx)">{device.manufacturer}</p>
             </div>
           {/if}
           {#if device.driver}
-            <div class="p-3 rounded-lg bg-neutral-50 dark:bg-white/3 border border-neutral-200/70 dark:border-white/5">
-              <p class="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 font-semibold mb-1">
+            <div class="p-3.5 rounded-xl bg-(--rg-creux) border border-(--rg-bd)">
+              <p class="mb-1 text-[10.5px] font-bold uppercase tracking-[0.08em] text-(--rg-mu2)">
                 {$t("settings.audio_devices_driver")}
               </p>
-              <p class="text-xs text-neutral-700 dark:text-neutral-300 truncate" title={device.driver}>
+              <p class="text-[13px] text-(--rg-tx) truncate" title={device.driver}>
                 {device.driver}
               </p>
             </div>
           {/if}
-          <div class="p-3 rounded-lg bg-neutral-50 dark:bg-white/3 border border-neutral-200/70 dark:border-white/5">
-            <p class="text-[10px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500 font-semibold mb-1">
+          <div class="p-3.5 rounded-xl bg-(--rg-creux) border border-(--rg-bd)">
+            <p class="mb-1 text-[10.5px] font-bold uppercase tracking-[0.08em] text-(--rg-mu2)">
               {$t("settings.audio_devices_channels")}
             </p>
-            <p class="text-xs text-neutral-700 dark:text-neutral-300">
+            <p class="text-[13px] text-(--rg-tx)">
               {device.maxChannels} ch{device.maxChannels >= 2 ? " (max)" : ""}
             </p>
           </div>
@@ -235,37 +232,42 @@
 
       <!-- Bannière source des données -->
       {#if probing}
-        <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-sky-500/8 border border-sky-500/20 text-[11px] text-sky-500 dark:text-sky-400">
-          <Icon icon="lucide:loader-2" width="13" class="animate-spin" />
+        <div class="flex items-center gap-2.5 px-3.5 py-3 rounded-xl border text-[13px]
+                    bg-(--rg-creux) border-(--rg-bd) text-(--rg-mu)">
+          <Icon icon="lucide:loader-2" width="16" class="shrink-0 animate-spin" />
           {$t("settings.audio_devices_probing")}
         </div>
       {:else if usingProbe}
-        <div class="flex items-start gap-2 px-3 py-2 rounded-lg bg-emerald-500/8 border border-emerald-500/20 text-[11px] text-emerald-600 dark:text-emerald-400">
-          <Icon icon="lucide:shield-check" width="13" class="mt-0.5 shrink-0" />
+        <div class="flex gap-2.5 px-3.5 py-3 rounded-xl border text-[13px] leading-normal
+                    bg-(--rg-gbg) border-(--rg-gbd) text-(--rg-gtx)">
+          <Icon icon="lucide:shield-check" width="16" class="mt-0.5 shrink-0 text-(--rg-g)" />
           <div>
-            <p class="font-medium">{$t("settings.audio_devices_probed_title")}</p>
-            <p class="text-[10px] opacity-80 mt-0.5">{$t("settings.audio_devices_probed_hint")}</p>
+            <p class="font-semibold">{$t("settings.audio_devices_probed_title")}</p>
+            <p class="mt-0.5 text-[12px] opacity-80">{$t("settings.audio_devices_probed_hint")}</p>
           </div>
         </div>
       {:else if caps}
-        <div class="flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-500/8 border border-amber-500/20 text-[11px] text-amber-600 dark:text-amber-400">
-          <Icon icon="lucide:info" width="13" class="mt-0.5 shrink-0" />
+        <div class="flex gap-2.5 px-3.5 py-3 rounded-xl border text-[13px] leading-normal
+                    bg-(--rg-ambg) border-(--rg-ambd) text-(--rg-amtx)">
+          <Icon icon="lucide:info" width="16" class="mt-0.5 shrink-0 text-(--rg-am)" />
           <div>
-            <p class="font-medium">{$t("settings.audio_devices_no_exclusive_title")}</p>
-            <p class="text-[10px] opacity-80 mt-0.5">{$t("settings.audio_devices_no_exclusive_hint")}</p>
+            <p class="font-semibold">{$t("settings.audio_devices_no_exclusive_title")}</p>
+            <p class="mt-0.5 text-[12px] opacity-80">{$t("settings.audio_devices_no_exclusive_hint")}</p>
           </div>
         </div>
       {:else if probeError}
-        <div class="flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-500/8 border border-amber-500/20 text-[11px] text-amber-600 dark:text-amber-400">
-          <Icon icon="lucide:info" width="13" class="mt-0.5 shrink-0" />
+        <div class="flex gap-2.5 px-3.5 py-3 rounded-xl border text-[13px] leading-normal
+                    bg-(--rg-ambg) border-(--rg-ambd) text-(--rg-amtx)">
+          <Icon icon="lucide:info" width="16" class="mt-0.5 shrink-0 text-(--rg-am)" />
           <div>
-            <p class="font-medium">{$t("settings.audio_devices_probe_failed")}</p>
-            <p class="text-[10px] opacity-80 mt-0.5">{probeError}</p>
+            <p class="font-semibold">{$t("settings.audio_devices_probe_failed")}</p>
+            <p class="mt-0.5 text-[12px] opacity-80">{probeError}</p>
           </div>
         </div>
       {:else if !device.wasapiId}
-        <div class="flex items-start gap-2 px-3 py-2 rounded-lg bg-neutral-500/8 border border-neutral-500/20 text-[11px] text-neutral-500 dark:text-neutral-400">
-          <Icon icon="lucide:info" width="13" class="mt-0.5 shrink-0" />
+        <div class="flex gap-2.5 px-3.5 py-3 rounded-xl border text-[13px] leading-normal
+                    bg-(--rg-creux) border-(--rg-bd) text-(--rg-mu)">
+          <Icon icon="lucide:info" width="16" class="mt-0.5 shrink-0" />
           <span>{$t("settings.audio_devices_cpal_only")}</span>
         </div>
       {/if}
@@ -273,16 +275,16 @@
       <!-- Mix format Windows (si probe dispo) -->
       {#if caps && caps.mixRate}
         <section>
-          <p class="text-[10px] font-semibold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-2">
+          <p class="mb-2 text-[11px] font-bold uppercase tracking-[0.1em] text-(--rg-mu)">
             {$t("settings.audio_devices_windows_mix")}
           </p>
-          <div class="p-3 rounded-lg bg-neutral-50 dark:bg-white/3 border border-neutral-200/70 dark:border-white/5">
-            <p class="text-xs text-neutral-700 dark:text-neutral-300 font-mono tabular-nums">
+          <div class="p-3.5 rounded-xl bg-(--rg-creux) border border-(--rg-bd)">
+            <p class="text-[13px] font-mono tabular-nums text-(--rg-tx)">
               {formatSampleRate(caps.mixRate)}
               {#if caps.mixBitDepth} · {caps.mixBitDepth}-bit{/if}
               {#if caps.mixChannels} · {caps.mixChannels} ch{/if}
             </p>
-            <p class="text-[10px] text-neutral-500 dark:text-neutral-400 mt-1">
+            <p class="mt-1 text-[12px] text-(--rg-mu)">
               {$t("settings.audio_devices_windows_mix_hint")}
             </p>
           </div>
@@ -292,7 +294,7 @@
       <!-- Formats -->
       {#if effectiveBitDepths.length > 0}
         <section>
-          <p class="text-[10px] font-semibold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-2">
+          <p class="mb-2 text-[11px] font-bold uppercase tracking-[0.1em] text-(--rg-mu)">
             {usingProbe
               ? $t("settings.audio_devices_formats_exclusive")
               : $t("settings.audio_devices_formats")}
@@ -300,8 +302,8 @@
           <div class="flex flex-wrap gap-1.5">
             {#each effectiveBitDepths as fmt}
               <span
-                class="text-[11px] px-2 py-1 rounded-md font-mono
-                       bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10
+                class="px-2 py-1 rounded-md border font-mono text-xs font-semibold
+                       bg-(--rg-creux) border-(--rg-bd)
                        {bitDepthTone(fmt)}"
               >
                 {fmt}
@@ -314,22 +316,22 @@
       <!-- Fréquences groupées par catégorie -->
       {#if effectiveRates.length > 0}
         <section>
-          <p class="text-[10px] font-semibold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-2">
+          <p class="mb-2 text-[11px] font-bold uppercase tracking-[0.1em] text-(--rg-mu)">
             {usingProbe
               ? $t("settings.audio_devices_sample_rates_exclusive")
               : $t("settings.audio_devices_sample_rates")}
           </p>
-          <div class="space-y-2">
+          <div class="space-y-2.5">
             {#each ratesByCategory as [category, rates]}
               <div>
-                <p class="text-[10px] font-semibold text-neutral-500 dark:text-neutral-400 mb-1">
+                <p class="mb-1.5 text-[12px] font-semibold text-(--rg-tx2)">
                   {category}
                 </p>
                 <div class="flex flex-wrap gap-1.5">
                   {#each rates as hz}
                     <span
-                      class="text-[11px] px-2 py-1 rounded-md font-mono tabular-nums
-                             bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10
+                      class="px-2 py-1 rounded-md border font-mono text-xs font-semibold tabular-nums
+                             bg-(--rg-creux) border-(--rg-bd)
                              {rateTone(hz)}"
                     >
                       {formatSampleRate(hz)}
@@ -345,14 +347,14 @@
       <!-- Buffer -->
       {#if device.minBufferFrames !== null && device.maxBufferFrames !== null}
         <section>
-          <p class="text-[10px] font-semibold uppercase tracking-widest text-neutral-400 dark:text-neutral-500 mb-2">
+          <p class="mb-2 text-[11px] font-bold uppercase tracking-[0.1em] text-(--rg-mu)">
             {$t("settings.audio_devices_buffer")}
           </p>
-          <div class="p-3 rounded-lg bg-neutral-50 dark:bg-white/3 border border-neutral-200/70 dark:border-white/5">
-            <p class="text-xs text-neutral-700 dark:text-neutral-300 font-mono tabular-nums">
+          <div class="p-3.5 rounded-xl bg-(--rg-creux) border border-(--rg-bd)">
+            <p class="text-[13px] font-mono tabular-nums text-(--rg-tx)">
               {device.minBufferFrames.toLocaleString($currentLocale)} – {device.maxBufferFrames.toLocaleString($currentLocale)} frames
             </p>
-            <p class="text-[10px] text-neutral-500 dark:text-neutral-400 mt-1">
+            <p class="mt-1 text-[12px] text-(--rg-mu)">
               {$t("settings.audio_devices_buffer_hint")}
             </p>
           </div>
@@ -360,52 +362,50 @@
       {/if}
 
       {#if selectError}
-        <div class="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-[11px] text-red-400">
+        <p class="px-4 py-3 rounded-xl border border-red-500/25 bg-red-500/8 text-[13px] text-red-600 dark:text-red-400">
           {selectError}
-        </div>
+        </p>
       {/if}
     </div>
 
-    <!-- Footer : sélection comme sortie active -->
-    <div class="px-6 py-4 border-t border-neutral-100 dark:border-white/5 flex items-center justify-between gap-3">
+    <!-- Pied : sélection comme sortie active -->
+    <footer class="shrink-0 flex items-center justify-between gap-3 px-6 py-3.5 border-t border-(--rg-bd) bg-(--rg-creux)">
       {#if isActive}
-        <div class="flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-          <Icon icon="lucide:check-circle-2" width="14" />
+        <div class="flex items-center gap-1.5 text-[13px] font-semibold text-(--rg-gtx)">
+          <Icon icon="lucide:check-circle-2" width="16" class="text-(--rg-g)" />
           {$t("settings.audio_devices_active")}
         </div>
       {:else}
-        <span class="text-[11px] text-neutral-500 dark:text-neutral-400">
+        <span class="min-w-0 text-[12.5px] text-(--rg-mu)">
           {$t("settings.audio_devices_select_hint")}
         </span>
       {/if}
-      <div class="flex items-center gap-2">
+      <div class="shrink-0 flex items-center gap-2">
         <button
-          class="px-3 py-1.5 text-xs rounded-md cursor-pointer transition-colors
-                 text-neutral-600 dark:text-neutral-300
-                 hover:bg-neutral-100 dark:hover:bg-white/5"
+          class="h-10 px-4 rounded-xl text-sm font-semibold cursor-pointer transition-colors
+                 text-(--rg-tx2) hover:bg-(--rg-hover) hover:text-(--rg-tx)"
           onclick={onClose}
         >
           {$t("common.close")}
         </button>
         {#if !isActive}
           <button
-            class="px-3 py-1.5 text-xs rounded-md font-medium cursor-pointer transition-colors
-                   bg-emerald-500 hover:bg-emerald-600 text-white
-                   disabled:opacity-50 disabled:cursor-not-allowed
-                   flex items-center gap-1.5"
+            class="h-10 pl-4 pr-5 rounded-xl text-sm font-bold cursor-pointer flex items-center gap-2 transition
+                   bg-(--rg-g) text-(--rg-on-g) hover:brightness-110
+                   disabled:opacity-40 disabled:cursor-not-allowed"
             disabled={selecting}
             onclick={selectAsOutput}
           >
             {#if selecting}
-              <Icon icon="lucide:loader-2" width="12" class="animate-spin" />
+              <Icon icon="lucide:loader-2" width="17" class="animate-spin" />
             {:else}
-              <Icon icon="lucide:check" width="12" />
+              <Icon icon="lucide:check" width="17" />
             {/if}
             {$t("settings.audio_devices_select_action")}
           </button>
         {/if}
       </div>
-    </div>
+    </footer>
   </div>
 </div>
 </div>

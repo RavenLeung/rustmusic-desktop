@@ -122,6 +122,24 @@ static MODE: AtomicU8 = AtomicU8::new(0);
 static PREAMP_CENTI_DB: AtomicU32 = AtomicU32::new(0);
 /// Facteur linéaire effectif du morceau en cours, en bits de `f32`.
 static CURRENT_FACTOR: AtomicU32 = AtomicU32::new(1.0f32.to_bits());
+/// Tags du morceau en cours (gain/pic piste puis album, NaN = absent) : un
+/// réglage modifié se recalcule sur eux, sans verrou pour le callback audio.
+const ABSENT: u32 = 0x7fc0_0000;
+static CURRENT_INFO: [AtomicU32; 4] = [
+    AtomicU32::new(ABSENT), AtomicU32::new(ABSENT), AtomicU32::new(ABSENT), AtomicU32::new(ABSENT),
+];
+
+fn store_info(info: ReplayGainInfo) {
+    let vals = [info.track_gain_db, info.track_peak, info.album_gain_db, info.album_peak];
+    for (slot, v) in CURRENT_INFO.iter().zip(vals) {
+        slot.store(v.map_or(ABSENT, f32::to_bits), Ordering::Relaxed);
+    }
+}
+
+fn load_info() -> ReplayGainInfo {
+    let v = |i: usize| Some(f32::from_bits(CURRENT_INFO[i].load(Ordering::Relaxed))).filter(|x| !x.is_nan());
+    ReplayGainInfo { track_gain_db: v(0), track_peak: v(1), album_gain_db: v(2), album_peak: v(3) }
+}
 
 pub fn mode() -> ReplayGainMode {
     ReplayGainMode::from_u8(MODE.load(Ordering::Relaxed))
@@ -160,6 +178,7 @@ pub fn reset_current_factor() {
 /// À appeler au lancement de chaque piste, **y compris** quand aucune info
 /// n'a été trouvée : sans ça le facteur du morceau précédent resterait actif.
 pub fn apply_track(info: ReplayGainInfo) {
+    store_info(info);
     let m = mode();
     let preamp = preamp_db();
 
@@ -186,21 +205,17 @@ pub fn apply_track(info: ReplayGainInfo) {
     );
 }
 
-/// Facteur linéaire qu'aurait cette piste avec les réglages courants, **sans**
-/// toucher à l'état global.
-///
-/// Sert au préchargement : on calcule le gain de la piste suivante pendant
-/// qu'elle est décodée, et il n'est publié qu'au moment de sa promotion —
-/// donc exactement quand ses échantillons commencent à sortir.
-pub fn factor_for(info: ReplayGainInfo) -> f32 {
-    compute_factor(&info, mode(), preamp_db())
-        .map(|o| o.factor)
-        .unwrap_or(1.0)
+/// Piste préchargée qui commence à sortir : son gain est calculé ici, avec les
+/// réglages du moment, pas avec ceux du préchargement. Sans allocation (callback).
+pub fn promote(info: ReplayGainInfo) {
+    store_info(info);
+    let factor = compute_factor(&info, mode(), preamp_db()).map_or(1.0, |o| o.factor);
+    CURRENT_FACTOR.store(factor.to_bits(), Ordering::Relaxed);
 }
 
-/// Publie directement un facteur déjà calculé (cf. [`factor_for`]).
-pub fn set_current_factor(factor: f32) {
-    CURRENT_FACTOR.store(factor.to_bits(), Ordering::Relaxed);
+/// Réglages modifiés : le morceau en cours suit tout de suite.
+pub fn refresh_current() {
+    apply_track(load_info());
 }
 
 /// Résultat du calcul de gain pour un morceau.
@@ -383,6 +398,26 @@ mod tests {
         .expect("un gain doit être calculé");
         assert!(!out.clipping_limited);
         assert!((out.factor - 0.5).abs() < 1e-3, "facteur : {}", out.factor);
+    }
+
+    /// Le préampli bougé en pleine écoute s'entend tout de suite, et la piste
+    /// préchargée prend le réglage du moment où elle démarre.
+    #[test]
+    fn preamp_change_reaches_the_playing_track() {
+        let info = ReplayGainInfo { track_gain_db: Some(-6.0), track_peak: Some(0.2), ..Default::default() };
+        set_mode(ReplayGainMode::Track);
+        set_preamp_db(0.0);
+        promote(info);
+        assert!((current_factor() - 10f32.powf(-6.0 / 20.0)).abs() < 1e-4);
+
+        set_preamp_db(3.0);
+        refresh_current();
+        assert!((current_factor() - 10f32.powf(-3.0 / 20.0)).abs() < 1e-4);
+
+        set_mode(ReplayGainMode::Off);
+        refresh_current();
+        assert_eq!(current_factor(), 1.0);
+        set_preamp_db(0.0);
     }
 
     #[test]

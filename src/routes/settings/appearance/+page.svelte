@@ -44,6 +44,7 @@
 
   // ─── Barre latérale ───
   const ouvrir = $derived($settingsStore.show_open_buttons === "true");
+  const playlists = $derived(visible("show_sidebar_playlists"));
   const albums = $derived(visible("show_pinned_albums"));
   const artistes = $derived(visible("show_pinned_artists"));
 
@@ -222,6 +223,7 @@
     <div class="rg-lignes border-r border-(--rg-line) max-md:border-r-0">
       {#each [
         { cle: "show_open_buttons" as const, titre: $t("settings.open_buttons"), desc: $t("settings.open_buttons_desc"), actif: ouvrir },
+        { cle: "show_sidebar_playlists" as const, titre: $t("settings.sidebar_playlists"), desc: $t("settings.sidebar_playlists_desc"), actif: playlists },
         { cle: "show_pinned_albums" as const, titre: $t("settings.pinned_albums"), desc: $t("settings.pinned_albums_desc"), actif: albums },
         { cle: "show_pinned_artists" as const, titre: $t("settings.pinned_artists"), desc: $t("settings.pinned_artists_desc"), actif: artistes },
       ] as ligne (ligne.cle)}
@@ -231,7 +233,7 @@
       {/each}
     </div>
     <div class="max-md:hidden">
-      <SidebarPreview {ouvrir} {albums} {artistes} />
+      <SidebarPreview {ouvrir} {playlists} {albums} {artistes} />
     </div>
   </div>
 </OptionGroup>

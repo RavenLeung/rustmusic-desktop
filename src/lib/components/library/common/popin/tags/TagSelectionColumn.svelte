@@ -29,17 +29,16 @@
 
 <!-- Pochette commune : remplace celle de chaque fichier, laisse ses autres images. -->
 <div
-  class="relative group aspect-square rounded-xl overflow-hidden shrink-0
-         ring-1 ring-black/5 dark:ring-white/10
-         bg-neutral-200/60 dark:bg-white/5"
+  class="relative group aspect-square rounded-2xl overflow-hidden shrink-0
+         border border-(--rg-bd) bg-(--rg-s2)"
 >
   {#if cover}
     <img src={cover.src} alt="" class="w-full h-full object-cover" />
     <span
       class="absolute top-2 left-2 pointer-events-none
-             flex items-center gap-1 px-1.5 py-0.5 rounded-md
+             flex items-center gap-1 px-1.5 py-0.5 rounded-lg
              text-[10px] font-bold uppercase tracking-wider
-             bg-emerald-500 text-white shadow-md shadow-black/30"
+             bg-(--rg-g) text-(--rg-on-g) shadow-md shadow-black/30"
     >
       <Icon icon="lucide:star" width="9" />
       {$t('tags.cover')}
@@ -49,7 +48,7 @@
       onclick={onremovecover}
       title={$t('tags.remove_image')}
       aria-label={$t('tags.remove_image')}
-      class="absolute top-2 right-2 w-6 h-6 rounded-md cursor-pointer
+      class="absolute top-2 right-2 w-6 h-6 rounded-lg cursor-pointer
              flex items-center justify-center
              bg-black/70 text-white hover:bg-red-500 transition-colors"
     >
@@ -61,17 +60,15 @@
       onclick={onpickcover}
       disabled={coverBusy || submitting}
       class="w-full h-full flex flex-col items-center justify-center gap-2 px-3
-             cursor-pointer transition-colors text-center
-             text-neutral-400 dark:text-neutral-500
-             hover:text-emerald-600 dark:hover:text-emerald-400
-             hover:bg-emerald-500/8 disabled:opacity-50"
+             cursor-pointer transition-colors text-center text-(--rg-mu)
+             hover:text-(--rg-g) hover:bg-(--rg-gbg) disabled:opacity-50"
     >
       <Icon
         icon={coverBusy ? 'lucide:loader-circle' : 'lucide:image-plus'}
         width="26"
         class={coverBusy ? 'animate-spin' : ''}
       />
-      <span class="text-[11px] font-medium leading-tight">
+      <span class="text-[11px] font-semibold leading-tight">
         {$t('tags.common_cover')}
       </span>
     </button>
@@ -79,10 +76,10 @@
 </div>
 
 {#if cover}
-  <p class="shrink-0 text-[10px] text-neutral-400 dark:text-neutral-500">
+  <p class="shrink-0 text-[10.5px] text-(--rg-mu)">
     {cover.mime_type.replace('image/', '').toUpperCase()} · {formatBytes(cover.bytes)}
     {#if cover.recompressed}
-      <span class="text-amber-500">· {$t('tags.reduced')}</span>
+      <span class="text-(--rg-am)">· {$t('tags.reduced')}</span>
     {/if}
     <br />
     {$t('tags.cover_keeps_others')}
@@ -91,25 +88,23 @@
 
 <!-- Ce sur quoi on agit, à vérifier avant d'écrire : un lot mal ciblé ne se rattrape pas. -->
 <div class="shrink-0">
-  <p class="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase
-            tracking-[0.09em] text-neutral-400 dark:text-neutral-500">
+  <p class="mb-1.5 flex items-center gap-1.5 text-[11px] font-bold uppercase
+            tracking-[0.1em] text-(--rg-mu)">
     {$t('tags.selection')}
-    <span class="px-1 rounded bg-neutral-200/70 dark:bg-white/10
-                 text-neutral-500 dark:text-neutral-400 tabular-nums">
+    <span class="px-1.5 rounded-md font-mono text-[10px] tracking-normal tabular-nums
+                 bg-(--rg-s2) text-(--rg-tx2)">
       {paths.length}
     </span>
   </p>
   <div class="max-h-52 overflow-y-auto scrollbar-none space-y-0.5">
     {#each paths as path, index (path)}
       <p
-        class="flex items-baseline gap-1.5 px-2 py-1 rounded text-[11px]
-               text-neutral-600 dark:text-neutral-300
-               hover:bg-neutral-200/50 dark:hover:bg-white/5"
+        class="flex items-baseline gap-1.5 px-2 py-1 rounded-lg text-[11.5px]
+               text-(--rg-tx2) hover:bg-(--rg-s2)"
         title={path}
       >
         {#if numbering}
-          <span class="shrink-0 w-4 text-right tabular-nums font-medium
-                       text-emerald-600 dark:text-emerald-400">
+          <span class="shrink-0 w-4 text-right tabular-nums font-semibold text-(--rg-g)">
             {index + 1}
           </span>
         {/if}
@@ -122,12 +117,12 @@
     type="button"
     onclick={ontogglenumbering}
     disabled={submitting}
-    class="mt-2 w-full flex items-center justify-center gap-1.5 px-2 h-7 rounded-lg
-           text-[11px] font-medium cursor-pointer transition-colors
-           disabled:opacity-40
+    class="mt-2 w-full flex items-center justify-center gap-1.5 px-2 h-8 rounded-xl border
+           text-[12px] font-semibold cursor-pointer transition-colors
+           disabled:opacity-40 disabled:cursor-default
            {numbering
-             ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-             : 'text-neutral-500 dark:text-neutral-400 hover:bg-neutral-200/60 dark:hover:bg-white/6'}"
+             ? 'bg-(--rg-gbg) border-(--rg-gbd) text-(--rg-gtx)'
+             : 'border-(--rg-bd) text-(--rg-tx2) hover:border-(--rg-bd2) hover:bg-(--rg-s2)'}"
   >
     <Icon icon={numbering ? 'lucide:check' : 'lucide:list-ordered'} width="12" />
     {$t('tags.number_tracks')}

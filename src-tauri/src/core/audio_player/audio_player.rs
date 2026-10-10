@@ -841,6 +841,11 @@ impl AudioPlayer {
         // Dernière annonce pour laquelle un décodage a été lancé, pour ne pas
         // relancer le même en boucle.
         let mut preload_attempted: Option<PathBuf> = None;
+        log::debug!(
+            "📦 Phase 6 : can_preload={} annoncé={:?}",
+            can_preload,
+            crate::core::audio_player::preload::announced_next()
+        );
 
         // ⭐ CRITIQUE: Attendre que le FullBuffer soit complètement lu
         // Le decoder est terminé mais il reste peut-être des données dans le buffer
@@ -925,6 +930,21 @@ impl AudioPlayer {
                 continue; // Ne pas vérifier is_end ce tour-ci
             }
 
+            // Le callback a peut-être déjà enchaîné : il ne reste que le suivi.
+            if let Some(done) = crate::core::audio_player::preload::take_promotion() {
+                total_duration.store(done.duration_secs.to_bits(), Ordering::Relaxed);
+                playing_path = done.path.clone();
+                log::info!("🔗 Enchaînement sans blanc → {}", done.path.display());
+                let _ = app_handle.emit(
+                    "track-advanced",
+                    done.path.to_string_lossy().to_string(),
+                );
+                preload_attempted = None;
+                // L'ancien tampon est libéré ici, hors du fil audio.
+                drop(done.old_samples);
+                continue;
+            }
+
             let source: u8 = current_source.load(Ordering::Relaxed);
             let mut is_end: bool = false;
 
@@ -966,7 +986,7 @@ impl AudioPlayer {
 
                     // Le gain de la nouvelle piste ne prend effet qu'ici,
                     // c'est-à-dire exactement quand ses échantillons sortent.
-                    crate::core::audio_player::replay_gain::set_current_factor(next.gain);
+                    crate::core::audio_player::replay_gain::promote(next.rg);
 
                     total_duration.store(next_secs.to_bits(), Ordering::Relaxed);
                     current_position_frames.store(0, Ordering::Relaxed);
@@ -987,9 +1007,29 @@ impl AudioPlayer {
                 }
             }
 
+            if is_end && !is_stopped.load(Ordering::Relaxed) {
+                log::debug!(
+                    "📦 Fin de piste sans enchaînement : source={} prêt={} annoncé={:?} tentative={:?}",
+                    source,
+                    crate::core::audio_player::preload::is_ready(),
+                    crate::core::audio_player::preload::announced_next(),
+                    preload_attempted
+                );
+            }
+
             if is_end || is_stopped.load(Ordering::Relaxed) {
                 // On vide le buffer final
                 if let Ok(mut fb) = full_buffer_data.write() {
+                    // Sous ce verrou, le callback ne peut plus enchaîner : s'il l'a
+                    // fait depuis le constat de fin, on continue, le tour suivant suit.
+                    if !is_stopped.load(Ordering::Relaxed)
+                        && crate::core::audio_player::preload::promotion_pending()
+                    {
+                        continue;
+                    }
+                    // Plus d'enchaînement possible : sinon le callback, voyant le
+                    // tampon vide, prendrait une réserve arrivée trop tard.
+                    crate::core::audio_player::preload::abort_current_decode();
                     fb.clear();
                 }
                 break;
@@ -1030,15 +1070,10 @@ impl AudioPlayer {
         // Le préchargement en vol n'a plus d'objet : on l'annule et on attend
         // sa sortie, pour ne pas laisser un thread décoder dans le vide.
         //
-        // Sur un arrêt utilisateur on vide tout ; sur une fin naturelle on
-        // CONSERVE l'annonce, car le frontend l'a peut-être déjà mise à jour
-        // pour la piste qui va suivre — l'effacer nous ferait perdre le
-        // préchargement du morceau d'après.
-        if user_stopped {
-            crate::core::audio_player::preload::reset();
-        } else {
-            crate::core::audio_player::preload::abort_current_decode();
-        }
+        // L'annonce est gardée dans les deux cas : sur un arrêt, l'interface a
+        // souvent déjà annoncé la suite de la NOUVELLE lecture, et ne la renvoie
+        // pas (même chemin). L'effacer privait son premier enchaînement de blanc.
+        crate::core::audio_player::preload::abort_current_decode();
         if let Some(h) = preload_handle.take() {
             let _ = h.join();
         }
@@ -2427,6 +2462,40 @@ where
                 // On attend 1ms pour laisser CPAL vider un peu le buffer.
                 if written == 0 {
                     std::thread::sleep(std::time::Duration::from_millis(1));
+                }
+            }
+        }
+    }
+
+    // La fin retenue par le rééchantillonneur : sans elle, le morceau est écourté.
+    if !is_stopped.load(Ordering::Relaxed) && seek_position.load(Ordering::Relaxed) == u64::MAX {
+        if let Some(rs) = resampler.as_mut() {
+            let tail = rs.finish();
+            if !tail.is_empty() {
+                let adapted: Vec<f32> = if channels as u16 != output_channels {
+                    let mut out: Vec<f32> =
+                        vec![0.0f32; (tail.len() / channels) * output_channels as usize];
+                    adapt_channels(&tail, channels, &mut out, output_channels.into());
+                    out
+                } else {
+                    tail
+                };
+
+                full_buffer_data
+                    .write()
+                    .unwrap_or_else(|e| e.into_inner())
+                    .extend_from_slice(&adapted);
+
+                // Encore en LiveDecode (piste très courte) : l'anneau aussi.
+                if current_source.load(Ordering::Relaxed) == 0 {
+                    let mut offset: usize = 0;
+                    while offset < adapted.len() && !is_stopped.load(Ordering::Relaxed) {
+                        let written: usize = producer.push_slice(&adapted[offset..]);
+                        offset += written;
+                        if written == 0 {
+                            std::thread::sleep(std::time::Duration::from_millis(1));
+                        }
+                    }
                 }
             }
         }

@@ -120,14 +120,13 @@
                submitLabel={$t('source.apply')} onsubmit={apply} submitDisabled={selection.changeCount === 0}>
     {#snippet start()}
       {#if selection.changeCount > 0}
-        <span class="flex items-center gap-1.5 text-[11.5px]
-                     text-neutral-600 dark:text-neutral-300">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+        <span class="flex items-center gap-1.5 text-[11.5px] font-semibold text-(--rg-tx2)">
+          <span class="w-1.5 h-1.5 rounded-full bg-(--rg-g)"></span>
           <!-- Deux nombres : quantité de valeurs et étendue des fichiers touchés. -->
           {selection.changeCount} {$t('source.values_changed')} · {selection.fileCount} {$t('tags.files')}
         </span>
       {:else}
-        <span class="text-[11.5px] text-neutral-400 dark:text-neutral-500">
+        <span class="text-[11.5px] text-(--rg-mu)">
           {$t('source.nothing_selected')}
         </span>
       {/if}

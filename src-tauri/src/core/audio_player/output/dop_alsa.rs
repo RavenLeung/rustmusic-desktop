@@ -31,6 +31,8 @@ use crate::core::audio_decoder::dsd::dop_encoder::{dop_silence_payload, stamp_ma
 /// Un périphérique de sortie ALSA hardware candidat au DoP.
 #[derive(Debug, Clone)]
 pub struct AlsaDopDevice {
+    /// Index de la carte ALSA.
+    pub index: u32,
     /// Identifiant ALSA ouvrable, ex. `hw:2,0`.
     pub hw_id: String,
     /// Nom lisible (ex. "Fosi Audio K7"), pour le matching avec le nom UI.
@@ -47,6 +49,7 @@ pub fn list_dop_devices() -> Vec<AlsaDopDevice> {
         let idx = card.get_index();
         let display = card.get_name().unwrap_or_else(|_| format!("Carte {idx}"));
         out.push(AlsaDopDevice {
+            index: idx as u32,
             hw_id: format!("hw:{idx},0"),
             display,
         });
@@ -58,17 +61,42 @@ pub fn list_dop_devices() -> Vec<AlsaDopDevice> {
 /// vers l'identifiant ALSA `hw:` correspondant, par sous-chaîne insensible à
 /// la casse dans les deux sens. `None` si aucune carte hardware ne correspond.
 pub fn resolve_hw_id(selected_display: &str) -> Option<String> {
+    let devices = list_dop_devices();
     let sel = selected_display.to_lowercase();
-    for dev in list_dop_devices() {
+    for dev in &devices {
         let name = dev.display.to_lowercase();
         if name.is_empty() {
             continue;
         }
         if sel.contains(&name) || name.contains(&sel) {
-            return Some(dev.hw_id);
+            return Some(dev.hw_id.clone());
         }
     }
-    None
+    from_sound_server(&devices, selected_display)
+}
+
+/// Nom de sortie → (nom de la carte ALSA, périphérique). Retenu parce que la sortie
+/// disparaît de PipeWire pendant la lecture exclusive ; le nom de carte survit à un
+/// rebranchement, pas son index.
+static SOUND_SERVER_NAMES: std::sync::LazyLock<std::sync::Mutex<std::collections::HashMap<String, (String, u32)>>> =
+    std::sync::LazyLock::new(Default::default);
+
+/// Le nom donné par PipeWire ne ressemble pas toujours à celui de la carte : on lui
+/// demande quelle carte est derrière.
+fn from_sound_server(devices: &[AlsaDopDevice], selected: &str) -> Option<String> {
+    let mut names = SOUND_SERVER_NAMES.lock().unwrap_or_else(|e| e.into_inner());
+    let (card_name, pcm) = match names.get(selected) {
+        Some(known) => known.clone(),
+        None => {
+            let (card, pcm) = super::profil_pipewire::alsa_pcm_for(selected)?;
+            let card_name = devices.iter().find(|d| d.index == card)?.display.clone();
+            log::info!("🎚️  Sortie « {selected} » : carte ALSA « {card_name} » (hw:{card},{pcm})");
+            names.insert(selected.to_string(), (card_name.clone(), pcm));
+            (card_name, pcm)
+        }
+    };
+    let dev = devices.iter().find(|d| d.display == card_name)?;
+    Some(format!("hw:{},{pcm}", dev.index))
 }
 
 /// Ouvre le PCM `hw:` en réessayant sur EBUSY (errno 16). Après une réservation

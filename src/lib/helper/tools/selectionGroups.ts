@@ -17,8 +17,8 @@ import type { TrackListView } from "#lib/types/ui/library/track/TrackListView";
  * album ou un artiste, pas sur la bibliothèque.
  */
 
-/** `folder` : dossier importé (par id) ; `path` : n'importe quel sous-dossier (par chemin). */
-export type GroupKind = "album" | "artist" | "genre" | "folder" | "path";
+/** `folder` : dossier importé (par id) ; `path` : n'importe quel sous-dossier (par chemin) ; `playlist` : par id. */
+export type GroupKind = "album" | "artist" | "genre" | "folder" | "path" | "playlist";
 
 /** Commande et paramètres qui rendent les pistes d'un groupe. */
 function requete(kind: GroupKind, libraryId: number, id: string) {
@@ -33,6 +33,8 @@ function requete(kind: GroupKind, libraryId: number, id: string) {
       return ["get_tracks_by_dir", { libraryId, dirId: id }] as const;
     case "path":
       return ["get_tracks_under_path", { libraryId, path: id }] as const;
+    case "playlist":
+      return ["get_playlist_tracks_view", { playlistId: Number(id) }] as const;
   }
 }
 
@@ -60,21 +62,20 @@ export async function toggleGroupSelection(
   libraryId: number,
   id: string,
 ): Promise<void> {
-  const cle = cleGroupe(kind, libraryId, id);
+  const [commande, params] = requete(kind, libraryId, id);
+  await toggleTracksGroup(cleGroupe(kind, libraryId, id), () => invoke<TrackListView[]>(commande, params));
+}
 
+/** Coche ou décoche un groupe dont l'appelant fournit les pistes (titres likés, récents…). */
+export async function toggleTracksGroup(cle: string, load: () => Promise<TrackListView[]>): Promise<void> {
   if (selectionStore.hasGroup(cle)) {
     selectionStore.toggleGroup(cle, []);
     return;
   }
-
   try {
-    const [commande, params] = requete(kind, libraryId, id);
-    const tracks = await invoke<TrackListView[]>(commande, params);
-    selectionStore.toggleGroup(
-      cle,
-      (tracks ?? []).map((t) => ({ id: t.id, track: t })),
-    );
+    const tracks = await load();
+    selectionStore.toggleGroup(cle, (tracks ?? []).map((t) => ({ id: t.id, track: t })));
   } catch (e) {
-    console.error(`Sélection ${kind} :`, e);
+    console.error(`Sélection ${cle} :`, e);
   }
 }

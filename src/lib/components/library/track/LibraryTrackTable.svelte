@@ -24,7 +24,9 @@
     groupes = null,
     enteteGroupe,
     barreHorizontale = false,
-  }: {
+    onremove,
+    removeLabel,
+}: {
     libraryId: number;
     tracks: TrackListView[];
     columns: TrackColumn[];
@@ -44,6 +46,9 @@
     enteteGroupe?: Snippet<[string]>;
     /** Dans une page qui défile : la largeur en trop défile seule, par une barre collée en bas, sans emporter la page. */
     barreHorizontale?: boolean;
+    /** « Retirer » dans le menu contextuel des lignes (playlist, likés). */
+    onremove?: (track: TrackListView) => void;
+    removeLabel?: string;
   } = $props();
 
   // ─── Défilement horizontal propre au tableau ───
@@ -191,13 +196,13 @@
         {@render enteteGroupe?.(g.cle)}
         {#if g.ouvert}
           {#each g.pistes as track, i (track.id)}
-            <LibraryTrackRow {libraryId} {track} {tracks} {columns} {souple} {detaille} {artisteSousTitre} rang={positions ? i + 1 : null} />
+            <LibraryTrackRow {libraryId} {track} {tracks} {columns} {souple} {detaille} {artisteSousTitre} rang={positions ? i + 1 : null} {onremove} {removeLabel} />
           {/each}
         {/if}
       {/each}
     {:else}
       {#each tracks as track, i (track.id)}
-        <LibraryTrackRow {libraryId} {track} {tracks} {columns} {souple} {detaille} {artisteSousTitre} rang={positions ? i + 1 : null} />
+        <LibraryTrackRow {libraryId} {track} {tracks} {columns} {souple} {detaille} {artisteSousTitre} rang={positions ? i + 1 : null} {onremove} {removeLabel} />
       {/each}
     {/if}
   </div>

@@ -8,6 +8,8 @@ import { scale } from "svelte/transition";
 import type { Library } from "#lib/types/db/library/Library";
 import { popinStore } from "#lib/stores/ui/popin.store";
 import AddLibraryPopin from "#lib/components/library/common/popin/AddLibraryPopin.svelte";
+import LibraryManageMenu, { bibliothequeOccupee } from "#lib/components/library/common/LibraryManageMenu.svelte";
+import LibraryFoldersPopin from "#lib/components/library/common/popin/LibraryFoldersPopin.svelte";
 import { page } from "$app/state";
 import { portal } from "#lib/helper/portal";
 import { currentLocale } from "#lib/i18n";
@@ -54,19 +56,39 @@ function handleSelectLibrary(library: Library) {
   }
 }
 
-/**
- * Désigne la bibliothèque ouverte au démarrage.
- *
- * Le menu reste ouvert : marquer un défaut n'est pas une navigation, et le
- * refermer masquerait le repère qui vient d'apparaître.
- */
-async function handleSetDefault(library: Library) {
-  try {
-    await libraryStore.setDefault(library);
-  } catch (e) {
-    console.error("Failed to set default library", e);
+// ─── Menu « Gérer » d'une bibliothèque, ouvert à côté de la liste ───
+const LARGEUR_GESTION = 340;
+let gestion = $state<{ library: Library; style: string } | null>(null);
+let gestionEl: HTMLElement | null = $state(null);
+let dossiersDe = $state<number | null>(null);
+let dossiersOuverts = $state(false);
+
+function ouvrirGestion(library: Library, e: MouseEvent) {
+  if (gestion?.library.id === library.id) {
+    gestion = null;
+    return;
   }
+  const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+  // À côté de la liste, pas du bouton : le menu ne la chevauche pas.
+  const liste = dropdownEl?.getBoundingClientRect() ?? r;
+  const aDroite = liste.right + 6 + LARGEUR_GESTION <= window.innerWidth - 8;
+  const x = aDroite ? liste.right + 6 : Math.max(8, liste.left - 6 - LARGEUR_GESTION);
+  // Près du bas, le menu s'appuie sur le bas de la fenêtre.
+  const y = r.top + 560 > window.innerHeight ? "bottom: 8px;" : `top: ${Math.max(8, r.top - 8)}px;`;
+  gestion = { library, style: `left: ${x}px; ${y} width: ${LARGEUR_GESTION}px; max-height: calc(100vh - 16px);` };
 }
+
+const occupee = (library: Library) => bibliothequeOccupee(library.id as number);
+
+function fermerTout() {
+  gestion = null;
+  isOpen = false;
+}
+
+// Le menu suit la bibliothèque mise à jour (nom, défaut).
+const gestionLib = $derived(
+  gestion ? ($libraryStore.libraries.find((l) => l.id === gestion!.library.id) ?? gestion.library) : null,
+);
 
 function handleViewLibrary(library: Library) {
   if (!library) return;
@@ -80,18 +102,26 @@ $effect(() => {
 
   function handleClickOutside(e: MouseEvent) {
     const cible = e.target as Node;
+    if (gestionEl?.contains(cible)) return;
+    if (gestion && !(cible instanceof Element && cible.closest('[data-gestion]'))) gestion = null;
     if (selectorEl && !selectorEl.contains(cible) && !dropdownEl?.contains(cible)) {
       isOpen = false;
     }
+  }
+  function echap(e: KeyboardEvent) {
+    if (e.key === 'Escape') gestion ? (gestion = null) : (isOpen = false);
   }
 
   const timer = setTimeout(() => {
     document.addEventListener('click', handleClickOutside);
   }, 50);
+  document.addEventListener('keydown', echap);
 
   return () => {
     clearTimeout(timer);
     document.removeEventListener('click', handleClickOutside);
+    document.removeEventListener('keydown', echap);
+    gestion = null;
   };
 });
 </script>
@@ -156,9 +186,8 @@ $effect(() => {
               <p class="text-xs text-neutral-400">{$t('selector.no_library')}</p>
             </div>
           {:else}
-            <!-- Deux boutons côte à côte plutôt qu'un seul : sélectionner et
-                 désigner par défaut sont deux gestes distincts, et un bouton
-                 imbriqué dans un autre n'est pas du HTML valide. -->
+            <!-- Deux boutons côte à côte : sélectionner, et ⋯ pour gérer (un bouton
+                 imbriqué dans un autre n'est pas du HTML valide). -->
             {#each $libraryStore.libraries as library (library.id)}
               {@const isActive = library.id === activeLibrary?.id}
               <div
@@ -215,21 +244,21 @@ $effect(() => {
                   </div>
                 </button>
 
-                {#if !library.is_default}
-                  <button
-                    type="button"
-                    title={$t('selector.set_default')}
-                    aria-label={$t('selector.set_default')}
-                    class="shrink-0 w-7 h-7 rounded-md flex items-center justify-center
-                           cursor-pointer transition-colors
-                           text-neutral-300 dark:text-neutral-600
-                           hover:text-green-600 dark:hover:text-green-400
-                           hover:bg-green-500/12"
-                    onclick={() => handleSetDefault(library)}
-                  >
-                    <Icon icon="lucide:pin" width="13" />
-                  </button>
-                {/if}
+                <button
+                  type="button"
+                  data-gestion
+                  title={$t('library_head.manage')}
+                  aria-label={$t('library_head.manage')}
+                  aria-expanded={gestion?.library.id === library.id}
+                  class="shrink-0 w-7 h-7 rounded-md flex items-center justify-center
+                         cursor-pointer transition-colors
+                         {gestion?.library.id === library.id
+                           ? 'text-neutral-700 dark:text-neutral-200 bg-neutral-200/70 dark:bg-white/10'
+                           : 'text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-200/60 dark:hover:bg-white/8'}"
+                  onclick={(e) => ouvrirGestion(library, e)}
+                >
+                  <Icon icon={occupee(library) ? "material-symbols:progress-activity" : "material-symbols:more-horiz"} width="16" class={occupee(library) ? "animate-spin" : ""} />
+                </button>
               </div>
             {/each}
           {/if}
@@ -269,3 +298,26 @@ $effect(() => {
     </div>
   {/if}
 </div>
+
+{#if isOpen && gestion && gestionLib}
+  <div
+    use:portal
+    bind:this={gestionEl}
+    role="menu"
+    class="fixed z-[10000] overflow-y-auto rounded-2xl border text-(--rg-tx)
+           bg-(--rg-carte) border-(--rg-bd) shadow-[0_18px_40px_rgba(0,0,0,0.18)]
+           dark:bg-linear-to-b dark:from-[#1c2220] dark:to-[#161a18] dark:border-[#2a312d] dark:shadow-[0_18px_40px_rgba(0,0,0,0.6)]"
+    style={gestion.style}
+    transition:scale={{ duration: 120, start: 0.97 }}
+  >
+    <LibraryManageMenu
+      library={gestionLib}
+      onclose={fermerTout}
+      onfolders={() => { dossiersDe = gestionLib.id; dossiersOuverts = true; }}
+    />
+  </div>
+{/if}
+
+{#if dossiersOuverts && dossiersDe !== null}
+  <LibraryFoldersPopin bind:open={dossiersOuverts} libraryId={dossiersDe} />
+{/if}

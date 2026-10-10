@@ -210,6 +210,20 @@ impl LibraryRepository {
     /// défaut par profil, donc poser le nouveau avant d'avoir retiré l'ancien
     /// échouerait. D'où la transaction — et la signature qui prend le pool
     /// plutôt qu'un exécuteur quelconque, puisqu'il faut pouvoir l'ouvrir.
+    /// Nouveau nom. L'unicité par profil est tenue par la base.
+    pub async fn rename(
+        pool: &sqlx::SqlitePool,
+        library_id: i64,
+        name: &str,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query("UPDATE library SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+            .bind(name)
+            .bind(library_id)
+            .execute(pool)
+            .await?;
+        Ok(())
+    }
+
     pub async fn set_default(
         pool: &sqlx::SqlitePool,
         library_id: i64,

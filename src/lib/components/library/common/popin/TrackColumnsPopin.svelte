@@ -2,6 +2,8 @@
   import Icon from "@iconify/svelte";
   import { invoke } from "@tauri-apps/api/core";
   import { t } from "#lib/i18n";
+  import { fade, scale } from "svelte/transition";
+  import PopinFooter from "#lib/components/ui/popin/PopinFooter.svelte";
   import {
     COLONNES_FIXES,
     COLONNES_PAR_DEFAUT,
@@ -116,6 +118,7 @@
 <div
   class="fixed inset-0 z-50 flex items-center justify-center"
   onkeydown={(e) => e.key === 'Escape' && (open = false)}
+  transition:fade={{ duration: 150 }}
 >
   <button
     type="button"
@@ -124,25 +127,30 @@
     aria-label={$t("common.close")}
   ></button>
 
-  <div class="relative w-full max-w-3xl mx-4 max-h-[80vh] flex flex-col
-              bg-neutral-50 dark:bg-neutral-900
-              border border-neutral-200/60 dark:border-white/8
-              rounded-2xl shadow-2xl shadow-black/20
-              overflow-hidden">
+  <div
+    role="dialog"
+    aria-modal="true"
+    aria-label={$t("columns.popin_title")}
+    class="relative w-full max-w-3xl mx-4 max-h-[80vh] flex flex-col
+           rounded-2xl overflow-hidden text-(--rg-tx)
+           bg-(--rg-carte) border border-(--rg-bd) dark:border-[#2a312d]
+           shadow-[0_24px_60px_-12px_rgba(0,0,0,0.25)] dark:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.9)]"
+    transition:scale={{ duration: 180, start: 0.96 }}
+  >
 
     <!-- En-tête -->
-    <div class="flex items-center justify-between px-6 py-4
-                border-b border-neutral-200/60 dark:border-white/6">
-      <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg flex items-center justify-center
-                    bg-green-500/10 border border-green-500/20">
-          <Icon icon="lucide:columns-3" width="16" class="text-green-500" />
-        </div>
-        <div>
-          <h2 class="text-base font-semibold text-neutral-800 dark:text-neutral-100">
+    <div class="shrink-0 flex items-center justify-between gap-3 px-6 pt-5 pb-4 border-b border-(--rg-bd)
+                bg-linear-135 from-(--rg-g)/8 to-transparent to-60%">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <span class="shrink-0 w-8 h-8 rounded-[9px] flex items-center justify-center
+                     bg-(--rg-gbg) text-(--rg-g) border border-(--rg-gbd)">
+          <Icon icon="lucide:columns-3" width="15" />
+        </span>
+        <div class="min-w-0">
+          <h2 class="text-[17px] font-extrabold tracking-[-0.01em] text-(--rg-tx) truncate">
             {$t("columns.popin_title")}
           </h2>
-          <p class="text-[11px] text-neutral-400 dark:text-neutral-500">
+          <p class="text-xs text-(--rg-mu) truncate">
             {$t("columns.popin_hint")}
           </p>
         </div>
@@ -150,55 +158,51 @@
       <button
         type="button"
         onclick={() => open = false}
-        class="p-1.5 rounded-lg cursor-pointer text-neutral-400
-               hover:bg-neutral-200/60 dark:hover:bg-white/5"
+        class="shrink-0 -mr-1.5 w-8 h-8 rounded-[9px] flex items-center justify-center
+               cursor-pointer text-(--rg-mu) hover:text-(--rg-tx) hover:bg-(--rg-hover) transition-colors"
         aria-label={$t("common.close")}
       >
-        <Icon icon="lucide:x" width="16" />
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <path d="M18 6 6 18M6 6l12 12" />
+        </svg>
       </button>
     </div>
 
     <div class="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-[1fr_18rem]">
 
       <!-- ─── Ce qu'on peut ajouter ─── -->
-      <div class="min-h-0 flex flex-col border-r border-neutral-200/60 dark:border-white/6">
-        <div class="px-5 pt-4 pb-2">
-          <div class="relative">
-            <Icon
-              icon="lucide:search"
-              width="14"
-              class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"
-            />
+      <div class="min-h-0 flex flex-col">
+        <div class="px-5 pt-4 pb-3">
+          <label class="h-10 flex items-center gap-2 px-3.5 rounded-xl border transition-colors
+                        bg-(--rg-champ) border-(--rg-bd) hover:border-(--rg-bd2) focus-within:border-(--rg-g)">
+            <Icon icon="material-symbols:search-rounded" width="18" class="shrink-0 text-(--rg-mu)" />
             <input
               type="text"
               bind:value={recherche}
               placeholder={$t("columns.filter")}
-              class="w-full text-sm pl-9 pr-3 py-2 rounded-lg
-                     bg-white dark:bg-white/5
-                     border border-neutral-200 dark:border-white/10
-                     text-neutral-800 dark:text-neutral-200
-                     focus:outline-none focus:border-emerald-400 dark:focus:border-emerald-500"
+              class="flex-1 min-w-0 bg-transparent border-0 outline-0 text-sm text-(--rg-tx) placeholder:text-(--rg-ph)"
             />
-          </div>
+          </label>
         </div>
 
-        <div class="flex-1 overflow-y-auto scrollbar-app px-5 pb-5 space-y-5">
+        <div class="flex-1 overflow-y-auto scrollbar-app px-5 pb-5 space-y-6">
 
           <section>
-            <h3 class="text-[10px] uppercase tracking-wider text-neutral-400 mb-2">
+            <h3 class="mb-2 text-[11px] font-bold uppercase tracking-[0.1em] text-(--rg-mu)">
               {$t("columns.library_fields")}
             </h3>
             <div class="grid grid-cols-2 gap-1">
               {#each fixesVisibles as col (col.key)}
-                <label class="flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer
-                              hover:bg-neutral-100 dark:hover:bg-white/5">
+                <label class="relative flex items-center gap-2.5 h-9 px-2.5 rounded-xl cursor-pointer transition-colors
+                              hover:bg-(--rg-hover) has-checked:bg-(--rg-creux-on)">
                   <input
                     type="checkbox"
                     checked={estAffichee(col.key)}
                     onchange={() => basculer(col.key)}
-                    class="accent-emerald-500 cursor-pointer"
+                    class="peer sr-only"
                   />
-                  <span class="text-xs text-neutral-700 dark:text-neutral-300 truncate">
+                  {@render coche()}
+                  <span class="text-[13px] truncate text-(--rg-tx2) peer-checked:text-(--rg-tx) peer-checked:font-semibold">
                     {libelleColonne(col, $t)}
                   </span>
                 </label>
@@ -207,36 +211,37 @@
           </section>
 
           <section>
-            <h3 class="text-[10px] uppercase tracking-wider text-neutral-400 mb-2">
+            <h3 class="mb-2 text-[11px] font-bold uppercase tracking-[0.1em] text-(--rg-mu)">
               {$t("columns.file_tags")}
             </h3>
 
             {#if chargement}
-              <div class="flex items-center gap-2 py-4 text-xs text-neutral-400">
+              <div class="flex items-center gap-2 py-4 text-xs text-(--rg-mu)">
                 <Icon icon="lucide:loader-2" width="14" class="animate-spin" />
                 {$t("columns.scanning_tags")}
               </div>
             {:else if tagsVisibles.length === 0}
-              <p class="text-xs text-neutral-400 py-3">
+              <p class="text-xs text-(--rg-mu) py-3">
                 {filtre ? $t("columns.no_tag_match") : $t("columns.no_extra_tags")}
               </p>
             {:else}
               <div class="grid grid-cols-2 gap-1">
                 {#each tagsVisibles as tag (tag.key)}
-                  <label class="flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer
-                                hover:bg-neutral-100 dark:hover:bg-white/5">
+                  <label class="relative flex items-center gap-2.5 h-9 px-2.5 rounded-xl cursor-pointer transition-colors
+                                hover:bg-(--rg-hover) has-checked:bg-(--rg-creux-on)">
                     <input
                       type="checkbox"
                       checked={estAffichee(`tag:${tag.key}`)}
                       onchange={() => basculer(`tag:${tag.key}`)}
-                      class="accent-emerald-500 cursor-pointer"
+                      class="peer sr-only"
                     />
-                    <span class="text-xs text-neutral-700 dark:text-neutral-300 truncate flex-1">
+                    {@render coche()}
+                    <span class="text-[13px] truncate flex-1 text-(--rg-tx2) peer-checked:text-(--rg-tx) peer-checked:font-semibold">
                       {intituleDeTag(tag.key, $t)}
                     </span>
                     <!-- L'effectif dit d'un coup d'œil si la colonne sera
                          majoritairement vide. -->
-                    <span class="text-[10px] tabular-nums text-neutral-400 shrink-0">
+                    <span class="text-[11px] tabular-nums text-(--rg-mu2) shrink-0">
                       {tag.filled}
                     </span>
                   </label>
@@ -248,53 +253,55 @@
       </div>
 
       <!-- ─── Ce qui est affiché, dans l'ordre ─── -->
-      <div class="min-h-0 flex flex-col">
-        <h3 class="text-[10px] uppercase tracking-wider text-neutral-400 px-5 pt-6 pb-2">
+      <div class="min-h-0 flex flex-col border-t md:border-t-0 md:border-l border-(--rg-bd) bg-(--rg-creux)">
+        <h3 class="px-5 pt-5 pb-3 text-[11px] font-bold uppercase tracking-[0.1em] text-(--rg-mu)">
           {$t("columns.shown").replace("{n}", String(choix.length))}
         </h3>
 
-        <div class="flex-1 overflow-y-auto scrollbar-app px-3 pb-3">
+        <div class="flex-1 overflow-y-auto scrollbar-app px-3 pb-3 space-y-1">
           {#if choix.length === 0}
-            <p class="text-xs text-neutral-400 px-2 py-3">
+            <p class="text-xs text-(--rg-mu) px-2 py-3">
               {$t("columns.none_shown")}
             </p>
           {/if}
 
           {#each choix as cle, i (cle)}
-            <div class="group flex items-center gap-1 px-2 py-1.5 rounded-md
-                        hover:bg-neutral-100 dark:hover:bg-white/5">
-              <span class="text-xs text-neutral-700 dark:text-neutral-300 truncate flex-1">
+            <div class="flex items-center gap-0.5 h-9 pl-2.5 pr-1 rounded-xl transition-colors
+                        bg-(--rg-carte) border border-(--rg-bd) hover:border-(--rg-bd2)">
+              <span class="w-5 shrink-0 text-[11px] font-semibold tabular-nums text-(--rg-mu2)">{i + 1}</span>
+              <span class="text-[13px] font-medium text-(--rg-tx) truncate flex-1">
                 {intitule(cle)}
               </span>
               <button
                 type="button"
                 onclick={() => deplacer(i, -1)}
                 disabled={i === 0}
-                class="p-0.5 rounded cursor-pointer text-neutral-400
-                       hover:text-neutral-700 dark:hover:text-neutral-200
-                       disabled:opacity-20 disabled:cursor-default"
+                class="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer transition-colors
+                       text-(--rg-mu) hover:bg-(--rg-hover) hover:text-(--rg-tx)
+                       disabled:opacity-25 disabled:cursor-default disabled:hover:bg-transparent"
                 aria-label={$t("tags.move_up")}
               >
-                <Icon icon="lucide:chevron-up" width="13" />
+                <Icon icon="lucide:chevron-up" width="14" />
               </button>
               <button
                 type="button"
                 onclick={() => deplacer(i, 1)}
                 disabled={i === choix.length - 1}
-                class="p-0.5 rounded cursor-pointer text-neutral-400
-                       hover:text-neutral-700 dark:hover:text-neutral-200
-                       disabled:opacity-20 disabled:cursor-default"
+                class="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer transition-colors
+                       text-(--rg-mu) hover:bg-(--rg-hover) hover:text-(--rg-tx)
+                       disabled:opacity-25 disabled:cursor-default disabled:hover:bg-transparent"
                 aria-label={$t("tags.move_down")}
               >
-                <Icon icon="lucide:chevron-down" width="13" />
+                <Icon icon="lucide:chevron-down" width="14" />
               </button>
               <button
                 type="button"
                 onclick={() => basculer(cle)}
-                class="p-0.5 rounded cursor-pointer text-neutral-400 hover:text-red-500"
+                class="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer transition-colors
+                       text-(--rg-mu) hover:bg-red-500/8 hover:text-red-600 dark:hover:text-red-400"
                 aria-label={$t("mini.remove")}
               >
-                <Icon icon="lucide:x" width="13" />
+                <Icon icon="lucide:x" width="14" />
               </button>
             </div>
           {/each}
@@ -302,16 +309,21 @@
       </div>
     </div>
 
-    <!-- Pied -->
-    <div class="flex items-center justify-between px-6 py-3
-                border-t border-neutral-200/60 dark:border-white/6">
-      <div class="flex items-center gap-3">
+    <PopinFooter
+      cancelLabel={$t("common.cancel")}
+      oncancel={() => (open = false)}
+      submitLabel={$t("source.apply")}
+      submitIcon="material-symbols:check-rounded"
+      onsubmit={valider}
+    >
+      {#snippet start()}
         <button
           type="button"
           onclick={reinitialiser}
-          class="text-xs cursor-pointer text-neutral-500 dark:text-neutral-400
-                 hover:text-neutral-800 dark:hover:text-neutral-200"
+          class="h-8 px-3 rounded-lg flex items-center gap-1.5 text-xs font-semibold cursor-pointer transition-colors
+                 text-(--rg-mu) hover:bg-(--rg-hover) hover:text-(--rg-tx)"
         >
+          <Icon icon="material-symbols:restart-alt-rounded" width="15" />
           {$t("columns.reset_columns")}
         </button>
         {#if onresetwidths}
@@ -320,32 +332,27 @@
           <button
             type="button"
             onclick={onresetwidths}
-            class="text-xs cursor-pointer text-neutral-500 dark:text-neutral-400
-                   hover:text-neutral-800 dark:hover:text-neutral-200"
+            class="h-8 px-3 rounded-lg flex items-center gap-1.5 text-xs font-semibold cursor-pointer transition-colors
+                   text-(--rg-mu) hover:bg-(--rg-hover) hover:text-(--rg-tx)"
           >
+            <Icon icon="material-symbols:width-rounded" width="15" />
             {$t("columns.reset_widths")}
           </button>
         {/if}
-      </div>
-      <div class="flex items-center gap-2">
-        <button
-          type="button"
-          onclick={() => open = false}
-          class="text-xs px-3 py-1.5 rounded-lg cursor-pointer
-                 text-neutral-600 dark:text-neutral-300
-                 hover:bg-neutral-200/60 dark:hover:bg-white/5"
-        >
-          {$t("common.cancel")}
-        </button>
-        <button
-          type="button"
-          onclick={valider}
-          class="text-xs px-3 py-1.5 rounded-lg cursor-pointer
-                 bg-emerald-500 hover:bg-emerald-400 text-white font-medium"
-        >
-          {$t("source.apply")}
-        </button>
-      </div>
-    </div>
+      {/snippet}
+    </PopinFooter>
   </div>
 </div>
+
+<!-- Case à cocher dessinée, pilotée par l'input frère (peer) -->
+{#snippet coche()}
+  <span
+    class="shrink-0 w-4.5 h-4.5 rounded-md flex items-center justify-center border-[1.5px] transition-colors
+           border-(--rg-bd2) text-transparent
+           peer-checked:bg-(--rg-g) peer-checked:border-(--rg-g) peer-checked:text-(--rg-on-g)
+           peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-(--rg-g)"
+    aria-hidden="true"
+  >
+    <Icon icon="material-symbols:check-rounded" width="14" />
+  </span>
+{/snippet}

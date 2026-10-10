@@ -6,6 +6,9 @@
   import type { Playlist } from "#lib/types/db/playlist/Playlist";
   import Icon from "@iconify/svelte";
   import { t } from "#lib/i18n";
+  import FormField from "#lib/components/ui/input/FormField.svelte";
+  import FormInput from "#lib/components/ui/input/FormInput.svelte";
+  import PopinFooter from "#lib/components/ui/popin/PopinFooter.svelte";
 
   /* eslint-disable svelte/valid-prop-names-in-kit-pages */
   const { playlist }: { playlist: Playlist } = $props();
@@ -28,6 +31,8 @@
   let selectedColor = $derived(PLAYLIST_COLORS[selectedColorIndex]);
   let selectedIcon = $derived(PLAYLIST_ICONS[selectedIconIndex]);
   // Libellé traduit d'une icône, d'après son id (« mynaui:heart » → heart).
+  // Bouton principal aux couleurs de la playlist.
+  let submitStyle = $derived(`background: ${selectedColor}; color: #fff; box-shadow: 0 2px 12px ${selectedColor}40;`);
   const iconLabel = (id: string) => $t(`playlist_icons.${id.split(":")[1]}`);
 
   function close() {
@@ -69,199 +74,99 @@
   }
 </script>
 
-<div class="space-y-5">
-
-  <!-- Preview live -->
-  <div class="flex items-center gap-4 p-3 rounded-xl"
-       style="background: {selectedColor}10;">
-    <div class="w-14 h-14 rounded-xl shrink-0 flex items-center justify-center"
-         style="background: {selectedColor}25; border: 1px solid {selectedColor}30;">
-      <Icon icon={selectedIcon.id} width="24" height="24"
-            style="color: {selectedColor};" class="drop-shadow-sm" />
-    </div>
+<div class="space-y-6">
+  <!-- La playlist telle qu'elle apparaîtra -->
+  <div class="flex items-center gap-4 p-3.5 rounded-2xl border transition-colors"
+       style="border-color: color-mix(in oklab, {selectedColor} 30%, transparent); background: linear-gradient(135deg, color-mix(in oklab, {selectedColor} 12%, transparent), transparent);">
+    <span class="w-12 h-12 shrink-0 rounded-xl flex items-center justify-center transition-colors"
+          style="background: color-mix(in oklab, {selectedColor} 16%, transparent); border: 1px solid color-mix(in oklab, {selectedColor} 30%, transparent); color: {selectedColor};">
+      <Icon icon={selectedIcon.id} width="24" />
+    </span>
     <div class="min-w-0">
-      <p class="text-sm font-semibold text-neutral-900 dark:text-neutral-100 truncate">
+      <p class="text-[15px] font-bold truncate text-(--rg-tx)">
         {name.trim() || _name}
       </p>
-      <p class="text-xs text-neutral-500 dark:text-neutral-400">
+      <p class="mt-0.5 text-xs text-(--rg-mu)">
         {track_count === 1 ? $t("home.track_one") : $t("home.tracks_n").replace("{n}", String(track_count))} · {$t("home.playlist")}
       </p>
     </div>
   </div>
 
-  <!-- Nom -->
-  <div class="flex flex-col gap-1.5">
-    <label for="pl_edit_name" class="text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-      {$t("forms.name")} <span class="text-red-500">*</span>
-    </label>
-    <input
-      id="pl_edit_name"
-      class="w-full rounded-xl border px-4 py-3 text-sm
-             bg-neutral-50 dark:bg-neutral-800/80
-             text-neutral-900 dark:text-neutral-100
-             placeholder-neutral-400 dark:placeholder-neutral-500
-             transition-all duration-200
-             focus:outline-none focus:ring-2 focus:border-transparent
-             {errorName
-               ? 'border-red-400/60 focus:ring-red-500/40'
-               : 'border-neutral-200 dark:border-neutral-700 focus:ring-emerald-500/40 hover:border-neutral-300 dark:hover:border-neutral-600'}"
-      placeholder={$t("popins.playlist_name")}
-      bind:value={name}
-      oninput={() => errorName = null}
-      disabled={isSubmitting}
-    />
-    {#if errorName}
-      <p class="flex items-center gap-1.5 text-xs text-red-500">
-        <Icon icon="heroicons:exclamation-circle" class="w-3.5 h-3.5 shrink-0" />
-        {$t(errorName)}
-      </p>
-    {/if}
-  </div>
+  <FormField label={$t("forms.name")} for="pl_edit_name" required error={errorName ? $t(errorName) : ""}>
+    <FormInput id="pl_edit_name" bind:value={name} placeholder={$t("popins.playlist_name")}
+               invalid={!!errorName} disabled={isSubmitting} oninput={() => errorName = null} />
+  </FormField>
 
-  <!-- Description -->
-  <div class="flex flex-col gap-1.5">
-    <label for="pl_edit_desc" class="text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-      {$t("forms.description")} <span class="normal-case font-normal tracking-normal">{$t("forms.optional")}</span>
-    </label>
-    <textarea id="pl_edit_desc"
-      class="w-full rounded-xl border px-4 py-3 text-sm resize-none
-             bg-neutral-50 dark:bg-neutral-800/80
-             text-neutral-900 dark:text-neutral-100
-             placeholder-neutral-400 dark:placeholder-neutral-500
-             border-neutral-200 dark:border-neutral-700
-             transition-all duration-200
-             hover:border-neutral-300 dark:hover:border-neutral-600
-             focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-transparent"
-      placeholder={$t("forms.description_placeholder")}
-      rows="2"
-      bind:value={description}
-      disabled={isSubmitting}
-    ></textarea>
-  </div>
+  <FormField label={$t("forms.description")} for="pl_edit_desc" optional={$t("forms.optional")}>
+    <FormInput id="pl_edit_desc" multiline bind:value={description} placeholder={$t("forms.description_placeholder")} disabled={isSubmitting} />
+  </FormField>
 
-  <!-- Couleur -->
-  <div class="flex flex-col gap-2">
-    <span class="text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-      {$t("forms.color")}
-    </span>
-    <div class="flex items-center gap-2">
+  <div class="grid grid-cols-[auto_1fr] items-center gap-x-5 gap-y-3.5">
+    <span class="text-[11px] font-bold uppercase tracking-[0.1em] text-(--rg-mu)">{$t("forms.color")}</span>
+    <div class="flex flex-wrap gap-2">
       {#each PLAYLIST_COLORS as color, i}
-        <button
-          type="button"
-          class="w-6 h-6 shrink-0 aspect-square rounded-full cursor-pointer transition-all duration-200
-                 {selectedColorIndex === i
-                   ? 'scale-115'
-                   : 'opacity-50 hover:opacity-100 hover:scale-105'}"
-          style="background: {color};
-                 {selectedColorIndex === i
-                   ? `box-shadow: 0 0 12px ${color}50, 0 0 0 2px rgba(0,0,0,0.2), 0 0 0 4px ${color}80;`
-                   : ''}"
-          aria-label={$t("forms.color_aria").replace("{color}", color)}
-          onclick={() => selectedColorIndex = i}
-        ></button>
+        <button type="button" aria-label={$t("forms.color_aria").replace("{color}", color)} aria-pressed={selectedColorIndex === i}
+                class="w-6 h-6 rounded-full cursor-pointer transition-transform hover:scale-110
+                       {selectedColorIndex === i ? 'ring-2 ring-offset-2 ring-(--rg-tx) ring-offset-(--rg-carte) scale-110' : ''}"
+                style="background: {color}"
+                onclick={() => selectedColorIndex = i}></button>
       {/each}
     </div>
-  </div>
-
-  <!-- Icône -->
-  <div class="flex flex-col gap-2">
-    <span class="text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-      {$t("forms.icon")}
-    </span>
-    <div class="flex flex-wrap items-center gap-1.5">
+    <span class="text-[11px] font-bold uppercase tracking-[0.1em] text-(--rg-mu)">{$t("forms.icon")}</span>
+    <div class="flex flex-wrap gap-1">
       {#each PLAYLIST_ICONS as icon, i}
-        <button
-          type="button"
-          class="w-9 h-9 shrink-0 rounded-lg flex items-center justify-center cursor-pointer
-                 transition-all duration-200
-                 {selectedIconIndex === i
-                   ? 'bg-neutral-200 dark:bg-neutral-700 scale-105'
-                   : 'hover:bg-neutral-100 dark:hover:bg-neutral-800 opacity-50 hover:opacity-100'}"
-          style={selectedIconIndex === i ? `color: ${selectedColor};` : ''}
-          onclick={() => selectedIconIndex = i}
-          title={iconLabel(icon.id)}
-        >
-          <Icon icon={icon.id} width="18" height="18" />
+        <button type="button" title={iconLabel(icon.id)} aria-label={iconLabel(icon.id)} aria-pressed={selectedIconIndex === i}
+                class="w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer transition-colors
+                       {selectedIconIndex === i ? 'text-white' : 'text-(--rg-mu) hover:bg-(--rg-hover) hover:text-(--rg-tx)'}"
+                style={selectedIconIndex === i ? `background: ${selectedColor}` : ""}
+                onclick={() => selectedIconIndex = i}>
+          <Icon icon={icon.id} width="18" />
         </button>
       {/each}
-    </div>
-  </div>
-
-  <!-- Séparateur -->
-  <div class="h-px bg-neutral-200 dark:bg-neutral-700/50"></div>
-
-  <!-- Actions -->
-  <div class="flex items-center justify-between">
-    <!-- Delete -->
-    <div>
-      {#if !showDeleteConfirm}
-        <button
-          type="button"
-          class="flex items-center gap-1.5 text-xs text-red-400/60 hover:text-red-400 transition-colors cursor-pointer"
-          onclick={() => showDeleteConfirm = true}
-          disabled={isSubmitting}
-        >
-          <Icon icon="heroicons:trash" class="w-3.5 h-3.5" />
-          {$t("common.delete")}
-        </button>
-      {:else}
-        <div class="flex items-center gap-2.5">
-          <span class="text-xs text-red-400">{$t("profil.confirm_delete")}</span>
-          <button
-            type="button"
-            class="px-2.5 py-1 rounded text-xs font-semibold text-white bg-red-500 hover:bg-red-400 cursor-pointer transition-colors"
-            onclick={handleDelete}
-            disabled={isSubmitting}
-          >
-            {$t("common.confirm")}
-          </button>
-          <button
-            type="button"
-            class="px-2.5 py-1 rounded text-xs text-neutral-500 dark:text-neutral-400
-                   bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700
-                   cursor-pointer transition-colors"
-            onclick={() => showDeleteConfirm = false}
-          >
-            {$t("common.cancel")}
-          </button>
-        </div>
-      {/if}
-    </div>
-
-    <div class="flex gap-3">
-      <button
-        type="button"
-        class="px-4 py-2 rounded-lg text-sm font-medium cursor-pointer
-              text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-200
-              hover:bg-neutral-100 dark:hover:bg-neutral-800
-              transition-all duration-150
-              disabled:opacity-50 disabled:cursor-not-allowed"
-        onclick={close}
-        disabled={isSubmitting}
-      >
-        {$t("common.cancel")}
-      </button>
-
-      <button
-        type="button"
-        class="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold cursor-pointer
-              text-white shadow-sm
-              hover:brightness-110 hover:shadow-md
-              active:scale-[0.97]
-              transition-all duration-150
-              disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
-        style="background: {selectedColor}; box-shadow: 0 2px 12px {selectedColor}40;"
-        onclick={submit}
-        disabled={isSubmitting}
-      >
-        {#if isSubmitting}
-          <Icon icon="lucide:loader-2" width="14" height="14" class="animate-spin" />
-          {$t("forms.saving")}
-        {:else}
-          <Icon icon="lucide:check" width="14" height="14" />
-          {$t("common.save")}
-        {/if}
-      </button>
     </div>
   </div>
 </div>
+
+<PopinFooter
+  bleed
+  cancelLabel={$t("common.cancel")}
+  oncancel={close}
+  cancelDisabled={isSubmitting}
+  submitLabel={isSubmitting ? $t("forms.saving") : $t("common.save")}
+  submitIcon="material-symbols:check-rounded"
+  onsubmit={submit}
+  busy={isSubmitting}
+  {submitStyle}
+>
+  {#snippet start()}
+    <!-- Suppression en deux temps -->
+    {#if !showDeleteConfirm}
+      <button
+        type="button"
+        class="flex items-center gap-1.5 text-sm font-semibold text-red-600 dark:text-red-400 hover:underline underline-offset-2 cursor-pointer disabled:opacity-50 disabled:cursor-default"
+        onclick={() => showDeleteConfirm = true}
+        disabled={isSubmitting}
+      >
+        <Icon icon="material-symbols:delete-outline-rounded" width="17" />
+        {$t("common.delete")}
+      </button>
+    {:else}
+      <span class="text-xs font-semibold text-red-600 dark:text-red-400 truncate">{$t("profil.confirm_delete")}</span>
+      <button
+        type="button"
+        class="shrink-0 h-8 px-3 rounded-lg text-xs font-bold text-white bg-red-600 hover:brightness-110 cursor-pointer transition disabled:opacity-50 disabled:cursor-default"
+        onclick={handleDelete}
+        disabled={isSubmitting}
+      >
+        {$t("common.confirm")}
+      </button>
+      <button
+        type="button"
+        class="shrink-0 h-8 px-3 rounded-lg text-xs font-semibold text-(--rg-tx2) hover:bg-(--rg-hover) hover:text-(--rg-tx) cursor-pointer transition-colors"
+        onclick={() => showDeleteConfirm = false}
+      >
+        {$t("common.cancel")}
+      </button>
+    {/if}
+  {/snippet}
+</PopinFooter>

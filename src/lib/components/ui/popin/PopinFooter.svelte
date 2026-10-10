@@ -1,5 +1,6 @@
 <script lang="ts">
-  // Pied de popin `flush` : état à gauche, Annuler et action principale à droite.
+  // Pied de popin : état à gauche, Annuler et action principale à droite.
+  // `bleed` : popin sans `flush`, le pied déborde les marges du corps pour toucher les bords.
   import Icon from "@iconify/svelte";
   import type { Snippet } from "svelte";
 
@@ -14,6 +15,9 @@
     onsubmit,
     submitDisabled = false,
     busy = false,
+    tone = "accent",
+    submitStyle = "",
+    bleed = false,
   }: {
     /** Contenu de gauche (état, compteurs), dans la zone extensible. */
     start?: Snippet;
@@ -29,13 +33,16 @@
     submitDisabled?: boolean;
     /** Roue à la place de l'icône du bouton principal. */
     busy?: boolean;
+    tone?: "accent" | "danger";
+    /** Couleur imposée au bouton principal (teinte d'une playlist). */
+    submitStyle?: string;
+    bleed?: boolean;
   } = $props();
 </script>
 
 <footer
-  class="shrink-0 flex items-center gap-3 px-4 py-2.5
-         border-t border-neutral-200/70 dark:border-white/8
-         bg-neutral-50/80 dark:bg-black/25"
+  class="shrink-0 flex items-center gap-3 px-6 py-3.5 border-t border-(--rg-bd) bg-(--rg-creux)
+         {bleed ? '-mx-6 -mb-6 mt-6' : ''}"
 >
   <div class="flex-1 min-w-0 flex items-center gap-2">
     {@render start?.()}
@@ -47,29 +54,26 @@
     type="button"
     onclick={oncancel}
     disabled={cancelDisabled}
-    class="flex items-center gap-1.5 px-3 h-8 rounded-lg text-[13px]
-           cursor-pointer transition-colors
-           text-neutral-600 dark:text-neutral-300
-           hover:bg-neutral-200/70 dark:hover:bg-white/8 disabled:opacity-50"
+    class="h-10 px-4 rounded-xl text-sm font-semibold cursor-pointer transition-colors
+           text-(--rg-tx2) hover:bg-(--rg-hover) hover:text-(--rg-tx)
+           disabled:opacity-50 disabled:cursor-default"
   >
-    <Icon icon="lucide:x" width="13" />
     {cancelLabel}
   </button>
   {#if submitLabel}
     <button
       type="button"
       onclick={onsubmit}
-      disabled={submitDisabled}
-      class="flex items-center gap-1.5 px-3.5 h-8 rounded-lg text-[13px] font-medium
-             cursor-pointer transition-all
-             bg-emerald-500 text-white
-             hover:bg-emerald-600 hover:shadow-lg hover:shadow-emerald-500/40
-             disabled:opacity-35 disabled:cursor-not-allowed disabled:shadow-none"
+      disabled={submitDisabled || busy}
+      style={submitStyle}
+      class="h-10 pl-4 pr-5 rounded-xl text-sm font-bold cursor-pointer flex items-center gap-2 transition
+             hover:brightness-110 disabled:opacity-40 disabled:cursor-default
+             {tone === 'danger' ? 'bg-red-600 text-white' : 'bg-(--rg-g) text-(--rg-on-g)'}"
     >
       {#if busy}
-        <Icon icon="lucide:loader-circle" width="13" class="animate-spin" />
+        <Icon icon="lucide:loader-2" width="17" class="animate-spin" />
       {:else}
-        <Icon icon={submitIcon} width="13" />
+        <Icon icon={submitIcon} width="17" />
       {/if}
       {submitLabel}
     </button>

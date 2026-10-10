@@ -116,6 +116,17 @@ export const libraryStore = {
           : state.librarySelected
     }));
   },
+  rename: async (library: Library, name: string) => {
+    if (library.id === null) return;
+    const nom = name.trim();
+    await invoke('rename_library', { libraryId: library.id, name: nom });
+    const renomme = (l: Library) => (l.id === library.id ? { ...l, name: nom } : l);
+    libraryWriter.update(state => ({
+      ...state,
+      libraries: state.libraries.map(renomme),
+      librarySelected: state.librarySelected && renomme(state.librarySelected),
+    }));
+  },
   setImporting: (importing: boolean) => {
     libraryWriter.update(state => ({
       ...state,

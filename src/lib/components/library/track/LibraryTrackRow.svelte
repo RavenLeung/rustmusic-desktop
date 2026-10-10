@@ -26,6 +26,8 @@ let {
     detaille = false,
     artisteSousTitre = true,
     rang = null,
+    onremove,
+    removeLabel,
 }: {
     libraryId: number;
     track: TrackListView;
@@ -39,6 +41,9 @@ let {
     artisteSousTitre?: boolean;
     /** Affiché quand les tags n'ont pas de numéro. */
     rang?: number | null;
+    /** « Retirer » dans le menu contextuel (playlist, likés). */
+    onremove?: (track: TrackListView) => void;
+    removeLabel?: string;
 } = $props();
 
 let contextMenu = $state<{ x: number; y: number } | null>(null);
@@ -212,5 +217,6 @@ const ib = "w-8 h-8 shrink-0 flex items-center justify-center rounded-lg cursor-
 </div>
 
 {#if contextMenu}
-    <TrackContextMenu {track} x={contextMenu.x} y={contextMenu.y} {libraryId} showNavigation={true} onclose={() => (contextMenu = null)} />
+    <TrackContextMenu {track} x={contextMenu.x} y={contextMenu.y} {libraryId} showNavigation={true} onclose={() => (contextMenu = null)}
+                      showDelete={!!onremove} deleteLabel={removeLabel} ondelete={() => onremove?.(track)} />
 {/if}

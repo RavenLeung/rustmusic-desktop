@@ -1,10 +1,12 @@
 # Changelog
 
-## [0.2.10] - 2026-10-09
+## [0.2.10] - 2026-10-10
 
 Un lecteur qui se fait tout petit, aux couleurs de son choix : volume dans le
 mini-lecteur, micro-lecteur réduit à la pochette, couleur d'accent libre et
-raccourcis clavier personnalisables.
+raccourcis clavier personnalisables. Les playlists passent au tableau de la
+bibliothèque, les grandes collections s'ouvrent plus vite, et l'enchaînement
+sans blanc gagne en précision.
 
 ### Lecture
 - **Volume dans le mini-lecteur** : un bouton au bout des commandes ouvre la
@@ -18,11 +20,70 @@ raccourcis clavier personnalisables.
 - Le mini et le micro-lecteur restent entiers dans l'écran : collés au bord,
   ils ne débordent plus en grandissant (retour au mini, panneau File ou
   Paroles).
+- **Enchaînement sans blanc plus précis** : la piste suivante démarre dans le
+  même bloc de son que la fin de la précédente, au lieu d'attendre un tour du
+  lecteur. Avec un rééchantillonnage (fichier 44,1 kHz sur une sortie 48 kHz,
+  par exemple), la fin du morceau n'est plus écourtée et le début n'a plus de
+  court silence. Après un arrêt, le premier enchaînement de la lecture
+  suivante est lui aussi sans blanc. Merci à l'auteur de la PR #3 pour
+  l'analyse.
+- **Linux : sortie exclusive retrouvée sur certains DAC USB** : quand PipeWire nomme la
+  sortie d'après la base USB (« Fiio E10 ») et ALSA d'après la puce
+  (« DigiHug USB Audio »), RustMusic ne retrouvait pas la carte et jouait en
+  partagé (« Pas d'accès direct à cette sortie »). Il demande désormais à
+  PipeWire quelle carte est derrière la sortie. Les capacités du DAC
+  (fréquences, profondeur) s'affichent aussi dans la liste des sorties.
+
+- **Préampli Replay Gain pris en compte tout de suite** : changer le mode ou
+  le préampli s'entend aussitôt sur le morceau en cours. Avant, le réglage
+  n'agissait qu'à partir du deuxième morceau : le suivant, déjà préchargé pour
+  l'enchaînement sans blanc, gardait l'ancien gain. Le gain d'une piste
+  préchargée est désormais calculé au moment où elle démarre.
+
+### Playlists
+- **Le tableau de la bibliothèque partout** : une playlist, les Titres likés et
+  Récemment joués s'affichent avec les mêmes colonnes, le même tri et le même
+  menu que les morceaux de la bibliothèque. L'ancien tableau, dont les colonnes
+  se décalaient, disparaît. « Retirer de la playlist » et « Retirer des likes »
+  sont dans le menu de chaque morceau.
+- **Sélectionner** : sur une playlist, et sur la page Playlists pour choisir
+  plusieurs playlists d'un coup (lire, ajouter à la file…).
+
+### Bibliothèque
+- **Sélectionner sur les fiches** : les fiches artiste, genre et année ont leur
+  bouton Sélectionner.
+- Les anciens boutons « Sélectionner » et « Type d'affichage », restés sur la
+  ligne des onglets (Mix, Années et les fiches), en sont retirés : ils
+  doublaient ceux de la page et cachaient l'onglet Playlists.
+- **Onglets Albums et Artistes plus rapides** sur les grandes collections : les
+  pochettes ne se chargent plus toutes d'un coup, seulement à l'approche de
+  l'écran (836 appels au lancement de l'onglet contre 21 sur une collection
+  d'essai).
+- **Pistes de compilations ignorées à l'import** : une compilation sans tag
+  « artiste de l'album », du même titre qu'une autre rangée dans un autre
+  dossier, perdait toutes ses pistes sauf la première (169 fichiers sur 2 424
+  chez un utilisateur). Elles sont désormais indexées ; un nouveau scan suffit.
+
+- **Gérer une bibliothèque depuis la barre latérale** : dans le sélecteur de
+  bibliothèques, le bouton ⋯ de chaque ligne ouvre le même menu que « Gérer »
+  (rescanner, dossiers, pochettes, import, suppression), sans avoir à l'ouvrir.
+- **Renommer une bibliothèque** et **la définir par défaut**, dans ce menu comme
+  dans « Gérer ».
 
 ### Apparence
 - **Couleur d'accent au choix** (Apparence → Thème) : dix teintes prêtes ou
   une couleur libre. Le logo, les boutons, les sélections, les liens et
   l'écran de chargement la suivent ; le vert des états validés ne change pas.
+- **Masquer les playlists de la barre latérale** (Apparence → Barre latérale) :
+  playlists épinglées, Titres likés et Récemment joués disparaissent d'un clic,
+  comme les albums et artistes épinglés.
+
+- **Fenêtres au style de l'application** : toutes les popins (création et
+  renommage de bibliothèque, playlists, éditeur de tags, renommage de fichiers,
+  colonnes, recherche de pochette, import, réinitialisation, détails d'une
+  sortie audio…) adoptent l'habillage des réglages : en-tête teinté, champs
+  clairs, pied de fenêtre avec le bouton à la couleur d'accent. Elles suivent
+  le thème clair ou sombre et la couleur d'accent choisie.
 
 ### Raccourcis
 - **Raccourcis personnalisables** : dans Réglages → Raccourcis, un clic sur les
@@ -31,6 +92,14 @@ raccourcis clavier personnalisables.
 - **Basculer en mini-lecteur** : Ctrl + Maj + M (⌘ + ⇧ + M sur Mac).
 - La sourdine (M) répond à la touche M sur un clavier AZERTY : c'était la
   touche « , ».
+
+### Réglages
+- Le bouton Retour des réglages ramène toujours à la page d'où l'on venait,
+  même après plusieurs sections parcourues.
+
+### Technique
+- Dépendances JavaScript et Rust mises à jour (TypeScript reste en 6 : SvelteKit
+  3 ne suit pas encore la 7).
 
 ## [0.2.9] - 2026-10-05
 

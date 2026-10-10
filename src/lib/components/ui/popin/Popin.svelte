@@ -55,26 +55,24 @@
       aria-modal="true"
       aria-label={$popinStore.title}
       class="flex flex-col w-full {width} mx-4 max-h-[88vh]
-             rounded-2xl overflow-hidden
-             bg-white dark:bg-neutral-900
-             ring-1 ring-black/5 dark:ring-white/10
-             shadow-2xl shadow-black/20 dark:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.9)]"
+             rounded-2xl overflow-hidden text-(--rg-tx)
+             bg-(--rg-carte) border border-(--rg-bd) dark:border-[#2a312d]
+             shadow-[0_24px_60px_-12px_rgba(0,0,0,0.25)] dark:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.9)]"
       transition:scale={{ duration: 180, start: 0.96 }}
     >
       <div
-        class="shrink-0 px-6 pt-5 pb-3
-               border-b border-neutral-200/70 dark:border-white/8"
+        class="shrink-0 px-6 pt-5 pb-4 border-b border-(--rg-bd)
+               bg-linear-135 from-(--rg-g)/8 to-transparent to-60%"
       >
         <div class="flex items-center justify-between gap-3">
           <h3 class="flex items-center gap-2.5 min-w-0
-                     text-base font-semibold tracking-tight text-neutral-900 dark:text-white">
+                     text-[17px] font-extrabold tracking-[-0.01em] text-(--rg-tx)">
             {#if $popinStore.icon}
               <!-- Pastille plutôt qu'icône nue : à côté d'un titre en gras une
                    icône seule paraît orpheline, le fond lui donne son assise. -->
               <span
-                class="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center
-                       bg-emerald-500/12 text-emerald-600 dark:text-emerald-400
-                       ring-1 ring-emerald-500/20"
+                class="shrink-0 w-8 h-8 rounded-[9px] flex items-center justify-center
+                       bg-(--rg-gbg) text-(--rg-g) border border-(--rg-gbd)"
               >
                 <Icon icon={$popinStore.icon} width="15" />
               </span>
@@ -83,10 +81,9 @@
           </h3>
           <button
             type="button"
-            class="shrink-0 -mr-1.5 w-7 h-7 rounded-lg flex items-center justify-center
-                   cursor-pointer text-neutral-400 dark:text-neutral-500
-                   hover:text-neutral-800 dark:hover:text-neutral-200
-                   hover:bg-neutral-100 dark:hover:bg-white/8 transition-colors"
+            class="shrink-0 -mr-1.5 w-8 h-8 rounded-[9px] flex items-center justify-center
+                   cursor-pointer text-(--rg-mu) hover:text-(--rg-tx) hover:bg-(--rg-hover)
+                   transition-colors"
             aria-label={$t("common.close")}
             onclick={() => popinStore.close()}
           >

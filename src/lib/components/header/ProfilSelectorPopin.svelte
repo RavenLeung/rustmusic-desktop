@@ -179,7 +179,7 @@
               class="relative cursor-pointer transition-all duration-300 ease-out
                      rounded-2xl overflow-hidden
                      {$profilSelector.profilSelected?.id === profil.id
-                       ? 'scale-110 ring-[3px] ring-green-400 shadow-[0_0_40px_rgba(74,222,128,0.25)]'
+                       ? 'scale-110 ring-[3px] ring-(--rg-g) shadow-[0_0_40px_color-mix(in_oklab,var(--rg-g)_25%,transparent)]'
                        : 'hover:scale-108 hover:shadow-2xl ring-[3px] ring-transparent hover:ring-black/10 dark:hover:ring-white/20'}"
               onclick={() => selectProfil(profil)}
             >

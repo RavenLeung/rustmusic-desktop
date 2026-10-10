@@ -939,10 +939,72 @@ async fn basculer_en_compilation(
         library_id, artist_id: divers.id.clone(),
     }).await;
 
-    sqlx::query("UPDATE library_albums SET artist_id = ?, album_type = 'compilation' WHERE id = ?")
-        .bind(&divers.id).bind(&album.id)
-        .execute(&mut *conn).await
-        .map_err(|e| format!("Passage en compilation : {e}"))?;
+    let mut pose = set_compilation_owner(&mut *conn, &divers.id, &album.id).await;
+    // Une autre compilation porte déjà ce titre dans un autre dossier : seul
+    // l'index de compatibilité 0.2.4 s'y oppose, il cède.
+    if matches!(&pose, Err(sqlx::Error::Database(e)) if e.is_unique_violation()) {
+        log::info!("Index de compatibilité 0.2.4 retiré : deux compilations « {} »", album.title);
+        if LibraryAlbumRepository::drop_compat_index(&mut *conn).await.is_ok() {
+            pose = set_compilation_owner(&mut *conn, &divers.id, &album.id).await;
+        }
+    }
+    // Un regroupement manqué ne vaut pas un fichier perdu : la piste reste indexée.
+    if let Err(e) = pose {
+        log::warn!("⚠️ Passage en compilation refusé pour « {} » : {e}", album.title);
+        return Ok(album);
+    }
 
     Ok(LibraryAlbum { artist_id: divers.id, album_type: "compilation".to_string(), ..album })
+}
+
+async fn set_compilation_owner(
+    conn: &mut sqlx::SqliteConnection,
+    owner_id: &str,
+    album_id: &str,
+) -> Result<(), sqlx::Error> {
+    sqlx::query("UPDATE library_albums SET artist_id = ?, album_type = 'compilation' WHERE id = ?")
+        .bind(owner_id).bind(album_id)
+        .execute(&mut *conn).await?;
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sqlx::sqlite::SqlitePoolOptions;
+
+    /// Deux compilations du même titre dans deux dossiers, sans tag « artiste
+    /// de l'album » : la seconde heurtait l'index 0.2.4 et ses pistes tombaient.
+    #[tokio::test]
+    async fn deux_compilations_du_meme_titre_restent_indexees() {
+        let pool = SqlitePoolOptions::new().max_connections(1)
+            .connect("sqlite::memory:").await.expect("base mémoire");
+        sqlx::migrate!("./SQL/").run(&pool).await.expect("migrations");
+        sqlx::query("INSERT OR IGNORE INTO profil (id, name) VALUES (1, 'Socle')").execute(&pool).await.unwrap();
+        sqlx::query("INSERT OR IGNORE INTO library (id, profil_id, name) VALUES (1, 1, 'test')").execute(&pool).await.unwrap();
+        for (id, nom) in [("a1", "Ricchi e Poveri"), ("a2", "Al Bano"), ("a3", "Pooh"), ("a4", "Matia Bazar")] {
+            sqlx::query("INSERT INTO artists (id, name, name_normalized, sort_name) VALUES (?, ?, ?, ?)")
+                .bind(id).bind(nom).bind(nom.to_lowercase()).bind(nom).execute(&pool).await.unwrap();
+        }
+        sqlx::query(crate::repository::library::library_album_repository::INDEX_COMPAT_0_2_4)
+            .execute(&pool).await.unwrap();
+
+        let mut conn = pool.acquire().await.unwrap();
+        let mut poser = async |dir: &str, artiste: &str| {
+            let album = LibraryAlbumRepository::insert_library_album(&mut *conn, LibraryAlbumCreate {
+                library_id: 1, artist_id: artiste.into(), album_dir: dir.into(),
+                title: "Amore".into(), title_normalized: "amore".into(),
+                year: None, genre: None, cover_url: None, album_type: None,
+            }).await.expect("album");
+            basculer_en_compilation(&mut *conn, album, artiste, false, 1).await
+        };
+
+        poser(r"E:\M\Amore 1", "a1").await.expect("1re piste");
+        let un = poser(r"E:\M\Amore 1", "a2").await.expect("1re compilation");
+        poser(r"E:\M\Amore 2", "a3").await.expect("1re piste, 2e dossier");
+        let deux = poser(r"E:\M\Amore 2", "a4").await.expect("la 2e compilation ne doit pas faire échouer la piste");
+
+        assert_eq!(deux.album_type, "compilation");
+        assert_ne!(un.id, deux.id, "un dossier, un album");
+    }
 }

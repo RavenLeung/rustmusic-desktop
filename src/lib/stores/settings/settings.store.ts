@@ -61,6 +61,7 @@ export type AppSettings = {
   // 'true' | 'false' — barre latérale repliée sur ses icônes.
   sidebar_collapsed: string;
   // 'true' | 'false' — sections d'épinglés de la barre latérale. Visibles par défaut.
+  show_sidebar_playlists: string;
   show_pinned_albums: string;
   show_pinned_artists: string;
   // 'true' | 'false' — pied de la barre réduit à une ligne, par sa languette.
@@ -105,6 +106,7 @@ export const settingsDefaults: AppSettings = {
   track_columns: '["artist","album","rating","duration"]',
   track_column_widths: '{}',
   sidebar_collapsed: 'false',
+  show_sidebar_playlists: 'true',
   show_pinned_albums: 'true',
   show_pinned_artists: 'true',
   sidebar_footer_collapsed: 'false',

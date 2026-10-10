@@ -1,466 +1,181 @@
 <script lang="ts">
+  // Une playlist, rangée ou auto : la page commune des playlists, avec ses actions (modifier, épingler, supprimer, retirer).
   import { page } from "$app/state";
+  import { goto } from "$app/navigation";
+  import { untrack } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
-  import CoverImg from "#lib/components/ui/image/CoverImg.svelte";
-  import { onMount } from "svelte";
-  import type { Playlist } from "#lib/types/db/playlist/Playlist";
-  import type { PlaylistTrackView } from "#lib/types/ui/playlist/playlistTrackView";
-  import { formatTime } from "#lib/helper/tools/dateTools";
-  import { handleSelectTrack, handlePlayTrack } from "#lib/actions/player/PlayerAction";
-  import { versFileDAttente } from "#lib/mapper/queue/mapQueueTrack";
-  import TrackContextMenu from "#lib/components/ui/contextmenu/TrackContextMenu.svelte";
   import Icon from "@iconify/svelte";
+  import { t, currentLocale } from "#lib/i18n";
   import { popinStore } from "#lib/stores/ui/popin.store";
   import { playlistStore } from "#lib/stores/playlist/playlist.store";
+  import { libraryStore } from "#lib/stores/library/library.store";
+  import { resetTagCache } from "#lib/config/trackColumns";
+  import RoundButton from "#lib/components/ui/button/RoundButton.svelte";
+  import PageState from "#lib/components/ui/layout/PageState.svelte";
+  import PlaylistTracksView from "#lib/components/playlist/PlaylistTracksView.svelte";
   import EditPlaylistPopin from "#lib/components/playlist/popin/EditPlaylistPopin.svelte";
   import SmartPlaylistPopin from "#lib/components/playlist/smart/SmartPlaylistPopin.svelte";
   import { resumerRegles, type FieldOption, type Group, type Vocabulary } from "#lib/components/playlist/smart/types";
-  import PageHeader from "#lib/components/ui/header/PageHeader.svelte";
-  import { goto } from "$app/navigation";
-  import { t, currentLocale } from "#lib/i18n";
-  import { toQueueTracks } from "#lib/helper/tools/queueTools";
-  import { queueState } from "#lib/stores/queue/queueState.store";
-  import { playerService } from "#lib/services/player/player.service";
-  import ViewModeToggle from "#lib/components/ui/input/ViewModeToggle.svelte";
-  import TrackTable from "#lib/components/library/track/TrackTable.svelte";
-  import { viewMode } from "#lib/stores/ui/viewMode.store";
-  import { libraryStore } from "#lib/stores/library/library.store";
-  import { trierPistes, resetTagCache, type SortDir } from "#lib/config/trackColumns";
+  import type { Playlist } from "#lib/types/db/playlist/Playlist";
+  import type { PlaylistTrackView } from "#lib/types/ui/playlist/playlistTrackView";
   import type { TrackListView } from "#lib/types/ui/library/track/TrackListView";
 
-  let playlist: Playlist | null = $state(null);
-  let tracks: PlaylistTrackView[] = $state([]);
-  let loading = $state(true);
-  let contextMenu = $state<{ x: number; y: number; track: PlaylistTrackView } | null>(null);
-
-  // ─── Vue tableau ───
-  //
-  // Les mêmes colonnes et le même tri que l'onglet Morceaux. Une commande
-  // dédiée rend la même liste au format de la bibliothèque : `PlaylistTrackView`
-  // ne porte qu'une douzaine de champs, de quoi afficher une ligne mais pas de
-  // quoi trier par débit ni montrer un label de disque.
-  //
-  // Elle sert aussi bien une playlist rangée qu'une intelligente : la
-  // bifurcation est côté Rust, et cette page n'a pas à la connaître.
-  let tableTracks = $state<TrackListView[]>([]);
-  let tableSortKey = $state<string | null>(null);
-  let tableSortDir = $state<SortDir>('asc');
-  let tableLoading = $state(false);
-
-  const tableLibraryId = $derived(
-    // La bibliothèque par défaut d'abord : c'est celle dont les tags ont le
-    // plus de chances de correspondre à ce qu'on regarde. Retomber sur la
-    // première venue dépendrait d'un ordre que rien ne garantit.
-    $libraryStore.libraries.find(l => l.is_default)?.id
-      ?? $libraryStore.libraries[0]?.id
-      ?? null
-  );
-  const tableSorted = $derived(trierPistes(tableTracks, tableSortKey, tableSortDir));
-
-  function handleTableSort(key: string, dir: SortDir) {
-    tableSortKey = key;
-    tableSortDir = dir;
-  }
-
-  $effect(() => {
-    const id = playlistId;
-    if ($viewMode !== 'list' || !id) return;
-    chargerTableau(id);
-  });
-
-  // ─── Ce que la playlist demande, écrit en clair ───
-  //
-  // Une playlist intelligente affichait son nom et son contenu, mais jamais ses
-  // règles. Quand les deux divergeaient — un nom resté d'une recette, des
-  // conditions venues d'une autre — rien ne le signalait : elle avait l'air
-  // correcte partout, et il fallait ouvrir l'éditeur pour s'en apercevoir.
-  let resume = $state<string | null>(null);
-
-  $effect(() => {
-    const id = playlistId;
-    if (!id || !playlist?.is_smart) { resume = null; return; }
-    chargerResume(id);
-  });
-
-  async function chargerResume(id: number) {
-    try {
-      const [voc, regles] = await Promise.all([
-        invoke<Vocabulary>('get_rule_vocabulary'),
-        invoke<Group | null>('get_smart_playlist_rules', { playlistId: id }),
-      ]);
-      resume = regles ? resumerRegles(regles, voc, voc.fields as FieldOption[]) : null;
-    } catch (e) {
-      console.error('Résumé des règles :', e);
-      resume = null;
-    }
-  }
-
-  async function chargerTableau(id: number) {
-    tableLoading = true;
-    try {
-      resetTagCache();
-      tableTracks = await invoke<TrackListView[]>('get_playlist_tracks_view', { playlistId: id });
-    } catch (e) {
-      console.error('Vue tableau :', e);
-      tableTracks = [];
-    } finally {
-      tableLoading = false;
-    }
-  }
-
   const playlistId = $derived(Number(page.params.id));
-  // Lu dans le store : épingler depuis la barre ou la page Playlists se voit ici aussi.
-  const epinglee = $derived($playlistStore.playlists.find((p) => p.id === playlistId)?.pinned ?? false);
 
-  async function loadPlaylist() {
+  let playlist = $state<Playlist | null>(null);
+  let tracks = $state<TrackListView[]>([]);
+  // Ligne de playlist de chaque morceau : c'est elle qu'on retire, pas le morceau.
+  let itemIds = $state(new Map<string, number>());
+  let loading = $state(true);
+  let failed = $state(false);
+  let rules = $state<string | null>(null);
+  let run = 0;
+
+  // La bibliothèque par défaut : ses tags et ses colonnes servent au tableau.
+  const libraryId = $derived(
+    $libraryStore.libraries.find((l) => l.is_default)?.id ?? $libraryStore.libraries[0]?.id ?? 0,
+  );
+  // Lu dans le store : un nom, une couleur ou une épingle changés ailleurs se voient ici aussi.
+  const live = $derived($playlistStore.playlists.find((p) => p.id === playlistId) ?? null);
+  const shown = $derived(live ?? playlist);
+  const pinned = $derived(live?.pinned ?? false);
+
+  let stamp: string | null = null;
+  $effect(() => {
+    const id = playlistId;
+    stamp = null;
+    if (id) untrack(() => load(id, ++run));
+  });
+  // Règles modifiées, titre ajouté depuis la bibliothèque : le store change, on recharge.
+  $effect(() => {
+    const next = live ? `${live.updated_at}|${live.track_count}` : null;
+    if (next === null) return;
+    if (stamp !== null && next !== stamp) untrack(() => load(playlistId, ++run));
+    stamp = next;
+  });
+
+  async function load(id: number, n: number) {
     loading = true;
+    failed = false;
     try {
-      playlist = await invoke<Playlist>('get_playlist', { playlistId });
-      tracks = await invoke<PlaylistTrackView[]>('get_playlist_tracks', { playlistId });
+      const [p, view, items] = await Promise.all([
+        invoke<Playlist>("get_playlist", { playlistId: id }),
+        invoke<TrackListView[]>("get_playlist_tracks_view", { playlistId: id }),
+        invoke<PlaylistTrackView[]>("get_playlist_tracks", { playlistId: id }),
+      ]);
+      if (n !== run) return;
+      resetTagCache();
+      playlist = p;
+      tracks = view ?? [];
+      itemIds = new Map((items ?? []).map((x) => [x.library_track_id, x.playlist_item_id]));
+      rules = p.is_smart ? await loadRules(id) : null;
     } catch (e) {
-      console.error('Failed to load playlist', e);
+      if (n === run) failed = true;
+      console.error("[playlist] chargement :", e);
     } finally {
-      loading = false;
+      if (n === run) loading = false;
     }
   }
 
-  async function handleRemoveFromPlaylist(playlistItemId: number) {
+  // Une playlist auto affiche ses règles en clair : un nom resté d'une autre recette se voit tout de suite.
+  async function loadRules(id: number): Promise<string | null> {
     try {
-      await invoke('remove_track_from_playlist', { playlistItemId });
-      tracks = tracks.filter(t => t.playlist_item_id !== playlistItemId);
-      // Mettre à jour le compteur dans le store sidebar
-      await playlistStore.refresh();
-      // Mettre à jour le compteur local
-      if (playlist) playlist.track_count = tracks.length;
-    } catch (e) {
-      console.error('Failed to remove track', e);
+      const [voc, group] = await Promise.all([
+        invoke<Vocabulary>("get_rule_vocabulary"),
+        invoke<Group | null>("get_smart_playlist_rules", { playlistId: id }),
+      ]);
+      return group ? resumerRegles(group, voc, voc.fields as FieldOption[]) : null;
+    } catch {
+      return null;
     }
   }
 
-  let showDeleteConfirm = $state(false);
-  // Le nom s'insère en gras là où la langue le place.
+  async function remove(track: TrackListView) {
+    const itemId = itemIds.get(track.id);
+    if (itemId == null) return;
+    try {
+      await invoke("remove_track_from_playlist", { playlistItemId: itemId });
+      tracks = tracks.filter((x) => x.id !== track.id);
+      await playlistStore.refresh();
+    } catch (e) {
+      console.error("[playlist] retrait :", e);
+    }
+  }
+
+  function edit() {
+    const p = shown;
+    if (!p) return;
+    if (p.is_smart) {
+      popinStore.open($t("playlist.new_smart"), SmartPlaylistPopin, { playlistId: p.id }, { size: "xl", icon: "lucide:sparkles", flush: true });
+    } else {
+      popinStore.open($t("playlist_page.edit_playlist"), EditPlaylistPopin, { playlist: p });
+    }
+  }
+
+  // ─── Suppression, après confirmation ───
+  let confirmDelete = $state(false);
   const confirmParts = $derived.by(() => {
-    const n = playlist?.track_count ?? 0;
+    const n = tracks.length;
     return $t(n === 1 ? "playlist_page.delete_confirm_one" : "playlist_page.delete_confirm_n")
       .replace("{n}", n.toLocaleString($currentLocale))
       .split("{name}");
   });
-
-  async function handleDeletePlaylist() {
-    if (!playlist) return;
+  async function deletePlaylist() {
     try {
-      await playlistStore.removePlaylist(playlist.id);
-      goto('/');
+      await playlistStore.removePlaylist(playlistId);
+      goto("/playlists");
     } catch (e) {
-      console.error('Failed to delete playlist', e);
+      console.error("[playlist] suppression :", e);
     }
   }
-
-  async function playAll() {
-    if (tracks.length === 0) return;
-    const queueTracks = toQueueTracks(tracks);
-    await queueState.loadTracks(queueTracks);
-    playerService.playFile(queueTracks[0]);
-  }
-
-  onMount(() => {
-    loadPlaylist();
-  });
 </script>
 
-<!-- La fenêtre ne défile jamais : `html, body` sont en `overflow: hidden`, et
-     le conteneur de contenu de la mise en page l'est aussi. Chaque page doit
-     donc fournir sa propre zone de défilement, sinon ce qui dépasse est
-     simplement rogné — ici la fin de la liste, cachée derrière le lecteur. -->
-<div class="h-full overflow-y-auto scrollbar-app py-5 px-4 md:px-10">
-  {#if loading}
-    <div class="flex items-center gap-3 py-20 justify-center text-neutral-500">
-      <Icon icon="lucide:loader-2" class="w-5 h-5 animate-spin" />
-      {$t("common.loading")}
-    </div>
-  {:else if playlist}
-    <PageHeader
-      title={playlist.name}
-      subtitle={playlist.is_smart && resume
-        ? `${$t("playlist.new_smart")} · ${resume}`
-        : playlist.is_smart ? $t("playlist.new_smart") : $t("home.playlist")}
-      icon={playlist.icon}
-      iconColor={playlist.color}
-      count={tracks.length}
-    >
-      {#snippet actions()}
-        <div class="flex items-center gap-2">
-          <!-- La bascule grille/liste vit dans la barre d'onglets de la bibliothèque,
-             qui ne couvre pas ces pages. Sans elle ici, le mode tableau existait
-             sans qu'on puisse le demander. -->
-          <ViewModeToggle />
-
-          <div class="w-px h-4 bg-neutral-200 dark:bg-white/10"></div>
-
-          <!-- Une playlist intelligente ne se modifie pas comme une autre :
-               ce qu'on veut y changer, ce sont ses règles, pas sa liste. -->
-          <button
-            type="button"
-            class="text-xs text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200
-                   cursor-pointer transition-colors flex items-center gap-1"
-            onclick={() => {
-              if (!playlist) return;
-              if (playlist.is_smart) {
-                popinStore.open(
-                  $t("playlist.new_smart"),
-                  SmartPlaylistPopin,
-                  { playlistId: playlist.id },
-                  { size: 'xl', icon: 'lucide:sparkles', flush: true },
-                );
-              } else {
-                popinStore.open($t("playlist_page.edit_playlist"), EditPlaylistPopin, { playlist });
-              }
-            }}
-          >
-            <Icon icon={playlist?.is_smart ? 'lucide:sparkles' : 'lucide:pen-line'} class="w-3 h-3" />
-            {playlist?.is_smart ? $t('playlist_page.rules') : $t('playlist_page.modify')}
-          </button>
-
-          <div class="w-px h-4 bg-neutral-200 dark:bg-white/10"></div>
-
-          <button
-            type="button"
-            class="p-1.5 rounded-lg cursor-pointer transition-colors
-                   {epinglee ? 'text-emerald-600 dark:text-emerald-400' : 'text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200'}"
-            title={epinglee ? $t("sidebar.unpin") : $t("sidebar.pin")}
-            aria-pressed={epinglee}
-            onclick={() => playlist && playlistStore.setPinned(playlist.id, !epinglee)}
-          >
-            <Icon icon={epinglee ? "material-symbols:keep-rounded" : "material-symbols:keep-outline-rounded"} width="15" />
-          </button>
-
-          <button
-            type="button"
-            class="p-1.5 rounded-lg cursor-pointer
-                   text-neutral-300 dark:text-neutral-600
-                   hover:text-red-500 hover:bg-red-500/10
-                   transition-all duration-150"
-            title={$t("playlist_page.delete_playlist")}
-            onclick={() => showDeleteConfirm = true}
-          >
-            <Icon icon="lucide:trash-2" width="14" />
-          </button>
-        </div>
-      {/snippet}
-
-      {#snippet extra()}
-        {#if tracks.length > 0}
-          <button
-            type="button"
-            onclick={playAll}
-            class="w-fit flex items-center gap-2 px-6 py-2 rounded-full
-                   bg-green-600 text-white font-medium
-                   hover:bg-green-700 transition-all duration-150 cursor-pointer"
-          >
-            <Icon icon="lucide:play" width={16} />
-            {$t('library.play_all')}
-          </button>
-        {/if}
-      {/snippet}
-    </PageHeader>
-
-    <!-- Track list -->
-    {#if tracks.length === 0}
-      <div class="flex flex-col items-center justify-center py-24 px-6 text-center">
-        <div class="relative mb-6">
-          <div class="absolute inset-0 rounded-full blur-2xl scale-[2.5] animate-pulse opacity-30 pointer-events-none"
-               style="background: {playlist.color};"></div>
-          <div class="relative w-20 h-20 rounded-full flex items-center justify-center
-                      border"
-               style="background: {playlist.color}12; border-color: {playlist.color}25;">
-            <Icon icon={playlist.icon} width="36" height="36"
-                  style="color: {playlist.color}; filter: drop-shadow(0 0 8px {playlist.color}60);" />
-          </div>
-        </div>
-
-        <h2 class="text-lg font-semibold text-neutral-800 dark:text-neutral-100 mb-2">
-          {$t('playlist_page.empty_playlist')}
-        </h2>
-
-        <p class="text-sm text-neutral-500 dark:text-neutral-400 max-w-xs leading-relaxed">
-          {$t('playlist_page.empty_playlist_desc')}
-        </p>
-      </div>
-    {:else}
-      <!-- Clé sur la piste, pas sur la ligne de playlist.
-           `playlist_item_id` désigne une ligne de `playlist_items`, qui n'existe
-           que pour les playlists rangées. Une playlist intelligente calcule son
-           contenu : toutes ses lignes portaient donc zéro, et Svelte refusait
-           des clés en double.
-           `library_track_id` convient aux deux : une contrainte d'unicité
-           interdit deux fois le même morceau dans une playlist rangée, et la
-           requête d'évaluation rend une ligne par piste. -->
-      {#if $viewMode === "list"}
-        {#if tableLoading}
-          <div class="flex items-center justify-center py-16">
-            <Icon icon="lucide:loader-2" width="20" class="animate-spin text-neutral-400" />
-          </div>
-        {:else}
-          <TrackTable
-            libraryId={tableLibraryId}
-            tracks={tableSorted}
-            sortKey={tableSortKey}
-            sortDir={tableSortDir}
-            onsort={handleTableSort}
-          />
-        {/if}
-      {:else}
-      {#each tracks as track, index (track.library_track_id)}
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div class="flex items-center justify-between py-3 px-3 rounded-md
-                    hover:bg-neutral-100 dark:hover:bg-neutral-900
-                    transition-colors duration-150"
-             ondblclick={() => track.path && handlePlayTrack(track.path, versFileDAttente(tracks))}
-             oncontextmenu={(e) => { e.preventDefault(); contextMenu = { x: e.clientX, y: e.clientY, track }; }}>
-          <!-- LEFT -->
-          <div class="flex items-center gap-4 min-w-0">
-            <div class="w-6 text-xs text-neutral-400 text-right shrink-0">
-              {String(index + 1).padStart(2, "0")}
-            </div>
-
-            <button onclick={() => track.path && handleSelectTrack(track.path, versFileDAttente(tracks))} class="cursor-pointer">
-              <div class="w-12 h-12 rounded-md overflow-hidden
-                          bg-neutral-200 dark:bg-neutral-700
-                          flex items-center justify-center shrink-0">
-                {#if track.thumbnail_path}
-                  <CoverImg path={track.thumbnail_path} alt={$t("tags.cover")}
-                       class="w-full h-full object-cover" />
-                {:else}
-                  <Icon icon="lucide:music" width={16} class="text-neutral-400" />
-                {/if}
-              </div>
-            </button>
-
-            <div class="flex flex-col items-stretch min-w-0">
-              <button onclick={() => track.path && handleSelectTrack(track.path, versFileDAttente(tracks))} class="text-left cursor-pointer min-w-0 w-full">
-                <span class="block font-medium text-neutral-800 dark:text-neutral-200 truncate"
-                      title={track.title ?? $t("common.unknown_title")}>
-                  {track.title ?? $t("common.unknown_title")}
-                </span>
-              </button>
-
-              <div class="text-xs text-neutral-500 dark:text-neutral-400 truncate">
-                {track.artist_name ?? $t("common.unknown_artist")}
-              </div>
-
-              {#if track.album_title}
-                <div class="text-xs text-neutral-500 dark:text-neutral-400 truncate my-1">
-                  <span class="font-semibold">{track.album_title}</span>
-                </div>
-              {/if}
-            </div>
-          </div>
-
-          <!-- RIGHT -->
-          <div class="flex items-center gap-6 text-sm text-neutral-500 dark:text-neutral-400 shrink-0">
-            <!-- Le nombre d'écoutes, seulement s'il y en a.
-                 Afficher « 0 écoute » sur les neuf dixièmes d'une bibliothèque
-                 ajouterait une colonne de zéros qui ne dit rien. L'absence est
-                 déjà l'information : ce qui porte un chiffre a été écouté. -->
-            {#if track.play_count > 0}
-              <span
-                class="hidden sm:flex items-center gap-1 text-[11px] tabular-nums
-                       text-neutral-400 dark:text-neutral-500"
-                title={$t(track.play_count > 1 ? "playlist_page.plays_n" : "playlist_page.plays_one").replace("{n}", track.play_count.toLocaleString($currentLocale))}
-              >
-                <Icon icon="mynaui:music" width="11" height="11" />
-                {track.play_count}
-              </span>
-            {/if}
-
-            <span class="tabular-nums">
-              {formatTime(track.duration ?? 0)}
-            </span>
-
-            <button
-              onclick={(e) => { contextMenu = { x: e.clientX, y: e.clientY, track }; }}
-              class="p-2 rounded-md cursor-pointer text-neutral-500 dark:text-neutral-400
-                     hover:bg-black/5 dark:hover:bg-white/10"
-              aria-label={$t("albums_view.more")}
-            >
-              <Icon icon="uit:ellipsis-v" width={24} height={24} />
-            </button>
-          </div>
-        </div>
-      {/each}
-      {/if}
-    {/if}
-  {/if}
-</div>
-
-{#if contextMenu}
-  <TrackContextMenu
-    track={contextMenu.track}
-    x={contextMenu.x}
-    y={contextMenu.y}
-    onclose={() => contextMenu = null}
-    showAddToPlaylist={false}
-    {...(playlist?.is_smart
-      ? {
-          // Une playlist intelligente n'a pas de ligne à retirer : son contenu
-          // découle des règles. Proposer « retirer » n'aurait rien fait, et le
-          // morceau aurait disparu de l'écran pour réapparaître au rechargement
-          // — le pire des deux, une action qui semble marcher.
-          showDelete: false,
-        }
-      : {
-          showDelete: true,
-          deleteLabel: $t("playlist_page.remove_playlist"),
-          ondelete: () => {
-            if (contextMenu) handleRemoveFromPlaylist(contextMenu.track.playlist_item_id);
-          },
-        })}
-  />
+{#if failed}
+  <PageState icon="material-symbols:queue-music-rounded" message={$t("common.error_library")} lien={{ href: "/playlists", label: $t("playlists_view.all") }} />
+{:else if !shown}
+  <PageState chargement message={$t("common.loading")} />
+{:else}
+  <PlaylistTracksView
+    title={shown.name}
+    kicker={shown.is_smart ? $t("playlist.new_smart") : $t("home.playlist")}
+    subtitle={rules}
+    color={shown.color}
+    icon={shown.icon}
+    {tracks}
+    {loading}
+    {libraryId}
+    emptyTitle={$t("playlist_page.empty_playlist")}
+    emptyDesc={$t("playlist_page.empty_playlist_desc")}
+    onremove={shown.is_smart ? undefined : remove}
+    removeLabel={$t("playlist_page.remove_playlist")}
+  >
+    {#snippet actions()}
+      <!-- Une playlist auto se modifie par ses règles, pas par sa liste. -->
+      <RoundButton icon={shown?.is_smart ? "lucide:sparkles" : "material-symbols:edit-outline-rounded"}
+                   title={shown?.is_smart ? $t("playlist_page.rules") : $t("playlist_page.modify")} onclick={edit} />
+      <RoundButton icon={pinned ? "material-symbols:keep-rounded" : "material-symbols:keep-outline-rounded"}
+                   title={pinned ? $t("sidebar.unpin") : $t("sidebar.pin")}
+                   onclick={() => playlistStore.setPinned(playlistId, !pinned)} />
+      <RoundButton icon="material-symbols:delete-outline-rounded" title={$t("playlist_page.delete_playlist")} onclick={() => (confirmDelete = true)} />
+    {/snippet}
+  </PlaylistTracksView>
 {/if}
 
-<!-- Dialog suppression playlist -->
-{#if showDeleteConfirm && playlist}
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
+{#if confirmDelete && shown}
   <div class="fixed inset-0 z-50 flex items-center justify-center">
     <button type="button" class="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-default"
-            onclick={() => showDeleteConfirm = false} aria-label={$t("common.close")}></button>
-
-    <div class="relative w-full max-w-sm mx-4 p-6
-                bg-neutral-50 dark:bg-neutral-900
-                border border-neutral-200/60 dark:border-white/8
-                rounded-2xl shadow-2xl shadow-black/20">
-
-      <div class="flex flex-col items-center text-center">
-        <div class="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
-          <Icon icon="lucide:trash-2" width="20" class="text-red-500" />
-        </div>
-
-        <h3 class="text-base font-semibold text-neutral-800 dark:text-neutral-100 mb-1">
-          {$t("playlist_page.delete_playlist")}
-        </h3>
-        <p class="text-sm text-neutral-500 dark:text-neutral-400 mb-6">
-          {confirmParts[0]}<strong class="text-neutral-700 dark:text-neutral-200">{playlist.name}</strong>{confirmParts[1] ?? ""}
-        </p>
-
-        <div class="flex items-center gap-3 w-full">
-          <button
-            class="flex-1 px-4 py-2 rounded-xl text-sm font-medium cursor-pointer
-                   text-neutral-600 dark:text-neutral-400
-                   hover:bg-neutral-100 dark:hover:bg-white/5
-                   transition-colors"
-            onclick={() => showDeleteConfirm = false}
-          >
-            {$t("common.cancel")}
-          </button>
-          <button
-            class="flex-1 px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer
-                   bg-red-500 text-white hover:bg-red-600
-                   active:scale-[0.97] transition-all"
-            onclick={handleDeletePlaylist}
-          >
-            {$t("common.delete")}
-          </button>
-        </div>
+            onclick={() => (confirmDelete = false)} aria-label={$t("common.close")}></button>
+    <div class="relative w-full max-w-sm mx-4 p-6 rounded-2xl border bg-(--rg-carte) border-(--rg-bd) shadow-2xl text-center">
+      <span class="mx-auto mb-4 w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center">
+        <Icon icon="material-symbols:delete-outline-rounded" width="22" class="text-red-500" />
+      </span>
+      <h3 class="mb-1 text-base font-bold text-(--rg-tx)">{$t("playlist_page.delete_playlist")}</h3>
+      <p class="mb-6 text-sm text-(--rg-mu)">{confirmParts[0]}<strong class="text-(--rg-tx)">{shown.name}</strong>{confirmParts[1] ?? ""}</p>
+      <div class="flex gap-3">
+        <button type="button" class="flex-1 h-10 rounded-xl text-sm font-semibold cursor-pointer text-(--rg-tx2) hover:bg-(--rg-hover)"
+                onclick={() => (confirmDelete = false)}>{$t("common.cancel")}</button>
+        <button type="button" class="flex-1 h-10 rounded-xl text-sm font-bold cursor-pointer bg-red-500 text-white hover:bg-red-600"
+                onclick={deletePlaylist}>{$t("common.delete")}</button>
       </div>
     </div>
   </div>

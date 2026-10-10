@@ -4,6 +4,8 @@
   import { goto } from "$app/navigation";
   import { t } from "#lib/i18n";
   import CoverImg from "#lib/components/ui/image/CoverImg.svelte";
+  import SelectionCheck from "#lib/components/ui/selection/SelectionCheck.svelte";
+  import { selectionStore } from "#lib/stores/ui/selection.store";
 
   let {
     href,
@@ -17,6 +19,8 @@
     onepingler,
     onmenu,
     liste = false,
+    selected = false,
+    onselect,
   }: {
     href: string;
     nom: string;
@@ -31,7 +35,18 @@
     onmenu?: (x: number, y: number) => void;
     /** Ligne de liste plutôt que carte. */
     liste?: boolean;
+    /** Mode sélection : cochée ou non, et quoi faire au clic (sinon la carte n'est pas cochable). */
+    selected?: boolean;
+    onselect?: () => void;
   } = $props();
+
+  // En mode sélection, la carte coche au lieu d'ouvrir la playlist.
+  const selecting = $derived($selectionStore.active && !!onselect);
+  function open(e: MouseEvent) {
+    e.preventDefault();
+    if (selecting) onselect?.();
+    else goto(href);
+  }
 
   function menu(e: MouseEvent) {
     if (!onmenu) return;
@@ -73,7 +88,8 @@
 
 {#if liste}
   <div class="group flex items-center gap-2 rounded-xl hover:bg-(--rg-hover) transition-colors">
-    <a {href} class="flex-1 min-w-0 flex items-center gap-3.5 px-2 py-2" oncontextmenu={menu} onclick={(e) => { e.preventDefault(); goto(href); }}>
+    <a {href} class="flex-1 min-w-0 flex items-center gap-3.5 px-2 py-2" oncontextmenu={menu} onclick={open}>
+      {#if selecting}<SelectionCheck coche={selected} />{/if}
       {@render mosaique("w-12 h-12 shrink-0 rounded-lg", 22)}
       <span class="flex-1 min-w-0">
         <span class="flex items-center gap-2">
@@ -83,16 +99,23 @@
         <span class="block truncate text-[13px] text-(--rg-mu)">{sousTitre}</span>
       </span>
     </a>
-    {@render punaiseBouton(`shrink-0 mr-2 w-9 h-9 ${epinglee ? "text-(--rg-gtx)" : "text-(--rg-mu2) opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-(--rg-tx)"}`, 19)}
+    {#if !selecting}{@render punaiseBouton(`shrink-0 mr-2 w-9 h-9 ${epinglee ? "text-(--rg-gtx)" : "text-(--rg-mu2) opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-(--rg-tx)"}`, 19)}{/if}
   </div>
 {:else}
   <div class="group relative min-w-0">
-    <a {href} class="min-w-0 flex flex-col gap-2.5" oncontextmenu={menu} onclick={(e) => { e.preventDefault(); goto(href); }}>
+    <a {href} class="min-w-0 flex flex-col gap-2.5" oncontextmenu={menu} onclick={open}>
       <span class="relative block">
         {@render mosaique("aspect-square w-full rounded-2xl shadow-[0_10px_26px_rgba(0,0,0,0.18)] dark:shadow-[0_10px_26px_rgba(0,0,0,0.5)] transition-transform duration-200 group-hover:-translate-y-0.5", 44)}
         {#if auto}
           <span class="absolute left-2 top-2 h-6 px-2 inline-flex items-center gap-1 rounded-full text-[11px] font-bold bg-black/55 text-white backdrop-blur-sm">
             <Icon icon="material-symbols:auto-awesome-rounded" width="13" />{$t("playlists_view.smart_badge")}
+          </span>
+        {/if}
+        {#if selecting}
+          {#if selected}<span class="absolute inset-0 rounded-2xl ring-3 ring-inset ring-(--rg-g) pointer-events-none"></span>{/if}
+          <span class="absolute right-2 top-2 w-6 h-6 rounded-[7px] border-2 flex items-center justify-center
+                       {selected ? 'bg-(--rg-g) border-(--rg-g) text-(--rg-on-g)' : 'bg-black/35 border-white/80 text-transparent'}">
+            <Icon icon="material-symbols:check-rounded" width="16" />
           </span>
         {/if}
       </span>
@@ -101,6 +124,6 @@
         <span class="block truncate text-[13px] text-(--rg-mu)">{sousTitre}</span>
       </span>
     </a>
-    {@render punaiseBouton(`absolute right-2 top-2 w-8 h-8 bg-black/55 text-white backdrop-blur-sm hover:bg-black/75 ${epinglee ? "" : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100"}`, 17)}
+    {#if !selecting}{@render punaiseBouton(`absolute right-2 top-2 w-8 h-8 bg-black/55 text-white backdrop-blur-sm hover:bg-black/75 ${epinglee ? "" : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100"}`, 17)}{/if}
   </div>
 {/if}

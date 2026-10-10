@@ -28,13 +28,13 @@
 
 <div class="flex-1 min-h-0 overflow-y-auto scrollbar-none px-3 py-2.5">
   {#if empty}
-    <p class="py-16 text-center text-[12.5px] text-neutral-400 dark:text-neutral-500">
+    <p class="py-16 text-center text-[13px] text-(--rg-mu)">
       {$t("rename.no_file")}
     </p>
   {:else if !preview}
     <div class="space-y-1" aria-hidden="true">
       {#each Array.from({ length: 6 }) as _, i (i)}
-        <div class="h-9 rounded-lg animate-pulse bg-neutral-100/70 dark:bg-white/4"></div>
+        <div class="h-9 rounded-lg animate-pulse bg-(--rg-s2)"></div>
       {/each}
     </div>
   {:else}
@@ -50,13 +50,11 @@
         aria-label={$t("source.select")}
         class="checkbox-app"
       />
-      <span class="flex-1 min-w-0 text-[9.5px] font-semibold uppercase tracking-widest
-                   text-neutral-400 dark:text-neutral-500">
+      <span class="flex-1 min-w-0 text-[10px] font-bold uppercase tracking-[0.1em] text-(--rg-mu)">
         {$t("rename.current")}
       </span>
       <span class="shrink-0 w-3"></span>
-      <span class="flex-1 min-w-0 text-[9.5px] font-semibold uppercase tracking-widest
-                   text-emerald-600/70 dark:text-emerald-400/70">
+      <span class="flex-1 min-w-0 text-[10px] font-bold uppercase tracking-[0.1em] text-(--rg-gtx)">
         {$t("rename.after")}
       </span>
     </div>
@@ -65,14 +63,14 @@
       {#each preview.moves as move (move.from)}
         {@const on = !move.blocked && !move.unchanged && !excluded.has(move.from)}
         <div
-          class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg
+          class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg border
                  {move.blocked
-                   ? 'bg-red-500/8'
+                   ? 'bg-red-500/8 border-red-500/25'
                    : move.unchanged
-                     ? 'bg-neutral-100/70 dark:bg-white/3 opacity-55'
+                     ? 'bg-(--rg-creux) border-(--rg-bd) opacity-55'
                      : on
-                       ? 'bg-emerald-500/8'
-                       : 'bg-neutral-100/70 dark:bg-white/3'}"
+                       ? 'bg-(--rg-creux-on) border-(--rg-gbd)'
+                       : 'bg-(--rg-creux) border-(--rg-bd)'}"
         >
           <!-- Pas de case sans choix : bloquée ou déjà conforme, rien à cocher. -->
           {#if move.blocked || move.unchanged}
@@ -81,8 +79,8 @@
                 icon={move.blocked ? "lucide:ban" : "lucide:check"}
                 width="11"
                 class={move.blocked
-                  ? "text-red-500/70"
-                  : "text-neutral-300 dark:text-neutral-600"}
+                  ? "text-red-600 dark:text-red-400"
+                  : "text-(--rg-mu2)"}
               />
             </span>
           {:else}
@@ -97,8 +95,8 @@
 
           <span class="flex-1 min-w-0 text-[12px] truncate
                        {on || move.blocked
-                         ? 'text-neutral-600 dark:text-neutral-300'
-                         : 'text-neutral-400 dark:text-neutral-500'}"
+                         ? 'text-(--rg-tx2)'
+                         : 'text-(--rg-mu)'}"
                 title={move.from}>
             {move.from_name}
           </span>
@@ -111,27 +109,27 @@
                 : "lucide:arrow-right"}
             width="11"
             class="shrink-0 {move.blocked
-              ? 'text-red-500'
-              : 'text-neutral-300 dark:text-neutral-600'}"
+              ? 'text-red-600 dark:text-red-400'
+              : 'text-(--rg-mu2)'}"
           />
 
           <span class="flex-1 min-w-0 text-[12px] truncate" title={move.to}>
             {#if move.blocked}
               <!-- La raison plutôt que le nom cible : elle dit quoi changer. -->
-              <span class="text-red-500">
+              <span class="text-red-600 dark:text-red-400">
                 {move.issues.map((i) => $t(`rename.issue.${i}`)).join(" · ")}
                 {#if move.missing.length > 0}
                   : {move.missing.map((f) => $t(`rename.field.${f}`)).join(", ")}
                 {/if}
               </span>
             {:else if move.unchanged}
-              <span class="italic text-neutral-400 dark:text-neutral-500">
+              <span class="italic text-(--rg-mu)">
                 {$t("rename.unchanged")}
               </span>
             {:else}
               <span class={on
-                ? "font-medium text-emerald-600 dark:text-emerald-400"
-                : "text-neutral-400 dark:text-neutral-500"}>
+                ? "font-semibold text-(--rg-gtx)"
+                : "text-(--rg-mu)"}>
                 {move.to_name}
               </span>
             {/if}

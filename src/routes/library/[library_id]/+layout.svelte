@@ -10,11 +10,9 @@ import { loadLibrary } from "#lib/services/library/library.service";
 import LibraryErrorLoading from "#lib/components/library/common/error/LibraryErrorLoading.svelte";
 import Icon from "@iconify/svelte";
 import LibraryHeader from "#lib/components/library/common/LibraryHeader.svelte";
-import LibraryTabBar from "#lib/components/library/common/LibraryTabBar.svelte";
 import ImportAccueil from "#lib/components/library/common/ImportAccueil.svelte";
 import { importAffiche } from "#lib/stores/library/importProgress.store";
-import { settingsStore } from "#lib/stores/settings/settings.store";
-import { lirePlacement, ongletCourant } from "#lib/config/libraryTabs";
+import { ongletCourant } from "#lib/config/libraryTabs";
 import { invoke } from "@tauri-apps/api/core";
 import { libraryStore } from "#lib/stores/library/library.store";
 import { toasts } from "#lib/stores/ui/toast.store";
@@ -68,7 +66,6 @@ let isFocusedView = $derived(page.url.pathname.endsWith("/tags") || /^\/library\
 // Les pages de liste ont leur propre barre d'outils : pas de rangée de commandes vide au-dessus.
 const avecSaBarre = $derived(/^\/library\/\d+\/(albums|tracks|artists|genres|years|mixes|folders)\/?$/.test(page.url.pathname));
 
-const placementOnglets = $derived(lirePlacement($settingsStore.library_tabs_position));
 
 // Bibliothèque sans morceau et sans import en cours : les listes cèdent la place à l'import.
 const vide = $derived(
@@ -131,14 +128,6 @@ async function importer(chemins: string[]) {
   {:else}
   {#if !isFocusedView}
   <LibraryHeader {library} />
-
-  <!-- Seulement en mode « à gauche » : ailleurs l'en-tête général porte déjà
-       les sections et les commandes. -->
-  {#if placementOnglets === 'sidebar' && !avecSaBarre}
-    <div class="shrink-0">
-      <LibraryTabBar />
-    </div>
-  {/if}
   {/if}
 
   <!-- Contenu (prend tout l'espace restant, scroll interne) -->

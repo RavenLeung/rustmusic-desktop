@@ -251,9 +251,8 @@
   </div>
   <div class="grid grid-cols-2 gap-1.5">
     <div class="flex items-center gap-2 px-3 py-2 rounded-lg
-                bg-neutral-100/50 dark:bg-white/2
-                text-[10px] leading-tight
-                text-neutral-400 dark:text-neutral-500">
+                bg-(--rg-creux) border border-dashed border-(--rg-bd)
+                text-[10px] leading-tight text-(--rg-mu)">
       <Icon icon="lucide:info" width="12" class="shrink-0" />
       {$t('tags.track_number_per_file')}
     </div>
@@ -290,8 +289,8 @@
   {#if erasing.length > 0}
     <div
       class="shrink-0 flex items-start gap-2 px-5 py-2
-             bg-amber-500/10 border-t border-amber-500/25
-             text-amber-700 dark:text-amber-300 text-[11px]"
+             bg-(--rg-ambg) border-t border-(--rg-ambd)
+             text-(--rg-am) text-[11px] font-medium"
       transition:fade={{ duration: 120 }}
     >
       <Icon icon="lucide:triangle-alert" width="13" class="shrink-0 mt-0.5" />

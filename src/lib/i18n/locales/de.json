@@ -19,7 +19,10 @@
     "new": "Neu",
     "default": "Standard",
     "set_default": "Als Standardbibliothek festlegen",
-    "default_hint": "Wird beim Start geöffnet"
+    "default_hint": "Wird beim Start geöffnet",
+    "rename": "Umbenennen",
+    "rename_desc": "Namen der Bibliothek ändern",
+    "rename_title": "Bibliothek umbenennen"
   },
   "home": {
     "ready": "Bereit zum Hören",
@@ -246,7 +249,9 @@
     "history_cleared_desc": "Die zuletzt gespielten Titel wurden entfernt",
     "plays_n": "{n} Wiedergaben",
     "plays_one": "{n} Wiedergabe",
-    "rules": "Regeln"
+    "rules": "Regeln",
+    "sort_order": "Reihenfolge",
+    "sort_album": "Album"
   },
   "actions": {
     "play_now": "Jetzt abspielen",
@@ -752,7 +757,9 @@
     "accent_pink": "Rosa",
     "accent_red": "Rot",
     "accent_orange": "Orange",
-    "accent_amber": "Bernstein"
+    "accent_amber": "Bernstein",
+    "sidebar_playlists": "Playlists",
+    "sidebar_playlists_desc": "Angeheftete Playlists, Gelikte Titel und Zuletzt gespielt"
   },
   "about": {
     "title": "Über",
@@ -1331,6 +1338,7 @@
     "add_files_desc": "Einzelne Titel, ohne Ordner",
     "folders": "Überwachte Ordner",
     "covers": "Cover abrufen",
+    "covers_desc": "Fehlende Cover, von Deezer",
     "covers_missing_one": "1 Album ohne Cover",
     "covers_missing_n": "{n} Alben ohne Cover",
     "covers_ok": "Jedes Album hat ein Cover",

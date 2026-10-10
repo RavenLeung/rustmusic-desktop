@@ -1,8 +1,3 @@
-<script module lang="ts">
-  // Page d'où l'on est venu : le bouton retour y ramène, pas à la section précédente.
-  let retour = "/";
-</script>
-
 <script lang="ts">
   // Réglages : navigation à gauche (recherche, sections, version), section active à droite.
   import Icon from "@iconify/svelte";
@@ -15,16 +10,20 @@
   import { settingsDefaults, settingsStore } from "#lib/stores/settings/settings.store";
   import { rechercheReglages } from "#lib/stores/ui/settingsSearch.store";
   import VersionCard from "#lib/components/settings/VersionCard.svelte";
+  import { settingsReturnUrl } from "#lib/stores/ui/settingsReturn.store";
   import type { Snippet } from "svelte";
 
   let { children }: { children: Snippet } = $props();
 
+  // En arrivant de l'extérieur, la recherche repart de zéro.
   afterNavigate(({ from }) => {
-    if (from && !from.url.pathname.startsWith("/settings")) {
-      retour = from.url.pathname + from.url.search;
-      rechercheReglages.set("");
-    }
+    if (from && !from.url.pathname.startsWith("/settings")) rechercheReglages.set("");
   });
+
+  // Retour à la page d'avant les réglages ; à l'accueil si elle n'existe plus.
+  function back() {
+    goto(settingsReturnUrl()).catch(() => goto("/"));
+  }
 
   const actif = $derived(page.url.pathname.split("/")[2] ?? "general");
   const section = $derived(settingsSections.find((s) => s.id === actif) ?? settingsSections[0]);
@@ -45,7 +44,7 @@
         type="button"
         class="w-10 h-10 flex items-center justify-center rounded-xl cursor-pointer transition-colors
                bg-(--rg-champ) border border-(--rg-bd) hover:border-(--rg-bd2) text-(--rg-tx)"
-        onclick={() => goto(retour)}
+        onclick={back}
         aria-label={$t("settings.back")}
         title={$t("settings.back")}
       >

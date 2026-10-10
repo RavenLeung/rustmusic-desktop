@@ -19,7 +19,10 @@
     "new": "New",
     "default": "Default",
     "set_default": "Set as default library",
-    "default_hint": "Opened on startup"
+    "default_hint": "Opened on startup",
+    "rename": "Rename",
+    "rename_desc": "Change the library name",
+    "rename_title": "Rename library"
   },
   "home": {
     "ready": "Ready to listen",
@@ -246,7 +249,9 @@
     "history_cleared_desc": "Recent tracks have been removed",
     "plays_n": "{n} plays",
     "plays_one": "{n} play",
-    "rules": "Rules"
+    "rules": "Rules",
+    "sort_order": "Order",
+    "sort_album": "Album"
   },
   "actions": {
     "play_now": "Play now",
@@ -752,7 +757,9 @@
     "accent_pink": "Pink",
     "accent_red": "Red",
     "accent_orange": "Orange",
-    "accent_amber": "Amber"
+    "accent_amber": "Amber",
+    "sidebar_playlists": "Playlists",
+    "sidebar_playlists_desc": "Your pinned playlists, Liked tracks and Recently played"
   },
   "about": {
     "title": "About",
@@ -1331,6 +1338,7 @@
     "add_files_desc": "A few tracks, without a folder",
     "folders": "Watched folders",
     "covers": "Fetch covers",
+    "covers_desc": "Missing covers, from Deezer",
     "covers_missing_one": "1 album without a cover",
     "covers_missing_n": "{n} albums without a cover",
     "covers_ok": "Every album has a cover",

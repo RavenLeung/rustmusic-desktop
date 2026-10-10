@@ -7,10 +7,10 @@
 </script>
 
 <div
-  class="shrink-0 flex items-start gap-2 px-5 py-2
-         bg-red-500/10 border-t border-red-500/20 text-red-500 text-[11px]"
+  class="shrink-0 flex items-start gap-2 px-6 py-2.5
+         bg-red-500/8 border-t border-red-500/20 text-red-600 dark:text-red-400 text-xs"
   transition:fade={{ duration: 120 }}
 >
-  <Icon icon="lucide:alert-triangle" width="13" class="shrink-0 mt-0.5" />
+  <Icon icon="lucide:alert-triangle" width="14" class="shrink-0 mt-px" />
   <span class="min-w-0">{message}</span>
 </div>

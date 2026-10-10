@@ -31,8 +31,7 @@
 
 <aside
   class="shrink-0 w-64 flex flex-col min-h-0 overflow-y-auto scrollbar-none
-         border-r border-neutral-200/70 dark:border-white/8
-         bg-neutral-50/70 dark:bg-black/20"
+         border-r border-(--rg-bd) bg-(--rg-creux)"
 >
   {#if !proposal}
     <div class="shrink-0 p-4 space-y-2">
@@ -42,27 +41,24 @@
           bind:value={query}
           onkeydown={(e) => e.key === 'Enter' && onsearch()}
           placeholder={$t('source.search_placeholder')}
-          class="flex-1 min-w-0 h-8 px-2.5 rounded-lg text-[12px] outline-none
-                 bg-white dark:bg-white/5
-                 ring-1 ring-inset ring-neutral-200 dark:ring-white/10
-                 focus:ring-emerald-500/60
-                 text-neutral-900 dark:text-neutral-100
-                 placeholder:text-neutral-400 dark:placeholder:text-neutral-600"
+          class="flex-1 min-w-0 h-9 px-3 rounded-xl text-[12.5px] outline-none transition-colors
+                 bg-(--rg-champ) text-(--rg-tx) placeholder:text-(--rg-ph)
+                 border border-(--rg-bd) hover:border-(--rg-bd2) focus:border-(--rg-g)"
         />
         <button
           type="button"
           onclick={() => onsearch()}
           disabled={searching || !query.trim()}
           aria-label={$t('source.search')}
-          class="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center
-                 cursor-pointer transition-colors disabled:opacity-40
-                 bg-emerald-500 text-white hover:bg-emerald-600"
+          class="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center
+                 cursor-pointer transition hover:brightness-110 disabled:opacity-40
+                 bg-(--rg-g) text-(--rg-on-g)"
         >
           <Icon icon={searching ? 'lucide:loader-circle' : 'lucide:search'}
                 width="13" class={searching ? 'animate-spin' : ''} />
         </button>
       </div>
-      <p class="text-[10.5px] text-neutral-400 dark:text-neutral-500">
+      <p class="text-[11px] text-(--rg-mu)">
         {targets.length} {$t('tags.files')}
       </p>
     </div>
@@ -73,33 +69,30 @@
           type="button"
           onclick={() => onpick(hit)}
           disabled={matching}
-          class="w-full flex items-center gap-2.5 p-1.5 rounded-lg text-left
+          class="w-full flex items-center gap-2.5 p-1.5 rounded-[10px] text-left
                  cursor-pointer transition-colors disabled:opacity-50
-                 hover:bg-neutral-200/60 dark:hover:bg-white/6"
+                 hover:bg-(--rg-s2)"
         >
-          <span class="shrink-0 w-10 h-10 rounded overflow-hidden
-                       bg-neutral-200 dark:bg-white/5">
+          <span class="shrink-0 w-10 h-10 rounded-md overflow-hidden
+                       bg-(--rg-s2) border border-(--rg-bd)">
             {#if hit.cover}
               <img src={hit.cover} alt="" class="w-full h-full object-cover" />
             {/if}
           </span>
           <span class="min-w-0 flex-1">
-            <span class="block text-[12px] font-medium truncate
-                         text-neutral-800 dark:text-neutral-100">{hit.title}</span>
+            <span class="block text-[12.5px] font-semibold truncate text-(--rg-tx)">{hit.title}</span>
             <!-- Le nombre de pistes : premier indice qu'on tient le bon album. -->
-            <span class="block text-[10.5px] truncate
-                         text-neutral-400 dark:text-neutral-500">
+            <span class="block text-[11px] truncate text-(--rg-mu)">
               {hit.artist} · {hit.track_count} {$t('source.tracks')}
               {#if hit.track_count === targets.length}
-                <span class="text-emerald-600 dark:text-emerald-400">✓</span>
+                <span class="text-(--rg-g)">✓</span>
               {/if}
             </span>
           </span>
         </button>
       {:else}
         {#if searched && !searching}
-          <p class="px-2 py-8 text-center text-[12px]
-                    text-neutral-400 dark:text-neutral-500">
+          <p class="px-2 py-8 text-center text-[12px] text-(--rg-mu)">
             {$t('source.no_result')}
           </p>
         {/if}
@@ -109,35 +102,33 @@
     <!-- L'album retenu en grand : la pochette dit d'un coup d'œil si c'est le bon disque. -->
     <div class="shrink-0 p-4 space-y-3">
       <div class="aspect-square rounded-xl overflow-hidden
-                  ring-1 ring-black/5 dark:ring-white/10
+                  border border-(--rg-bd)
                   shadow-lg shadow-black/10 dark:shadow-black/50
-                  bg-neutral-200/60 dark:bg-white/5">
+                  bg-(--rg-s2)">
         {#if proposal.album.cover}
           <img src={proposal.album.cover} alt="" class="w-full h-full object-cover" />
         {/if}
       </div>
 
       <div>
-        <p class="text-[13px] font-medium leading-tight
-                  text-neutral-800 dark:text-neutral-100">
+        <p class="text-[14px] font-bold leading-tight text-(--rg-tx)">
           {proposal.album.title}
         </p>
-        <p class="mt-0.5 text-[11.5px] text-neutral-500 dark:text-neutral-400">
+        <p class="mt-0.5 text-[12px] text-(--rg-tx2)">
           {proposal.album.artist}
         </p>
         <div class="mt-1.5 flex flex-wrap gap-1">
           {#each [proposal.album.year, proposal.album.genre].filter(Boolean) as badge (badge)}
-            <span class="px-1.5 py-0.5 rounded text-[10px]
-                         bg-neutral-200/70 dark:bg-white/10
-                         text-neutral-500 dark:text-neutral-400">{badge}</span>
+            <span class="px-1.5 py-0.5 rounded-[5px] border text-[10.5px] font-semibold
+                         bg-(--rg-s2) border-(--rg-bd2) text-(--rg-mu)">{badge}</span>
           {/each}
           <!-- Pistes / fichiers : c'est ce badge qui dit si on a désigné le bon disque. -->
           <span
             title="{proposal.album.tracks.length} {$t('source.tracks')} · {targets.length} {$t('tags.files')}"
-            class="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] tabular-nums
+            class="flex items-center gap-1 px-1.5 py-0.5 rounded-[5px] border text-[10.5px] font-bold tabular-nums
                    {proposal.album.tracks.length === targets.length
-                     ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-                     : 'bg-amber-500/15 text-amber-600 dark:text-amber-400'}"
+                     ? 'bg-(--rg-gbg) border-(--rg-gbd) text-(--rg-gtx)'
+                     : 'bg-(--rg-ambg) border-(--rg-ambd) text-(--rg-am)'}"
           >
             <Icon
               icon={proposal.album.tracks.length === targets.length
@@ -153,10 +144,10 @@
       <button
         type="button"
         onclick={() => (selection.proposal = null)}
-        class="w-full flex items-center justify-center gap-1.5 px-2 h-7 rounded-lg
-               text-[11.5px] cursor-pointer transition-colors
-               text-neutral-500 dark:text-neutral-400
-               hover:bg-neutral-200/70 dark:hover:bg-white/8"
+        class="w-full flex items-center justify-center gap-1.5 px-2 h-8 rounded-xl
+               text-[12px] font-semibold cursor-pointer transition-colors
+               border border-(--rg-bd) text-(--rg-tx2)
+               hover:bg-(--rg-hover) hover:border-(--rg-bd2) hover:text-(--rg-tx)"
       >
         <Icon icon="lucide:repeat" width="12" />
         {$t('source.change')}
@@ -165,10 +156,8 @@
 
     <!-- Raccourcis par champ : « toutes les années » d'un clic, sans parcourir les lignes. -->
     {#if selection.fieldSummary.length > 0}
-      <div class="shrink-0 mt-auto px-4 py-3 space-y-2
-                  border-t border-neutral-200/70 dark:border-white/8">
-        <p class="text-[10px] font-semibold uppercase tracking-widest
-                  text-neutral-400 dark:text-neutral-500">
+      <div class="shrink-0 mt-auto px-4 py-3 space-y-2 border-t border-(--rg-bd)">
+        <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-(--rg-mu)">
           {$t('source.by_field')}
         </p>
         <div class="flex flex-wrap gap-1">
@@ -179,13 +168,13 @@
               type="button"
               onclick={() => selection.toggleField(summary.field)}
               title="{summary.picked} / {summary.total}"
-              class="flex items-center gap-1 px-1.5 h-6 rounded-md text-[10.5px]
+              class="flex items-center gap-1 px-1.5 h-6 rounded-md border text-[11px] font-semibold
                      cursor-pointer transition-colors
                      {full
-                       ? 'bg-emerald-500/18 text-emerald-600 dark:text-emerald-400'
+                       ? 'bg-(--rg-gbg) border-(--rg-gbd) text-(--rg-gtx)'
                        : partial
-                         ? 'bg-emerald-500/8 text-emerald-600/80 dark:text-emerald-400/80'
-                         : 'bg-neutral-200/60 dark:bg-white/6 text-neutral-400 dark:text-neutral-500'}"
+                         ? 'bg-(--rg-creux-on) border-(--rg-gbd) text-(--rg-gtx)'
+                         : 'bg-(--rg-s2) border-(--rg-bd) text-(--rg-mu) hover:border-(--rg-bd2)'}"
             >
               {$t(summary.label)}
               <span class="tabular-nums opacity-70">
@@ -195,7 +184,7 @@
           {/each}
         </div>
 
-        <p class="text-[10px] leading-relaxed text-neutral-400 dark:text-neutral-500">
+        <p class="text-[11px] leading-relaxed text-(--rg-mu2)">
           {$t('source.limits')}
         </p>
       </div>

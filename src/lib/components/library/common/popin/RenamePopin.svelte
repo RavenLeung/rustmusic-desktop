@@ -251,22 +251,22 @@
     {#snippet start()}
       <span class="flex items-center gap-3 text-[11.5px]">
         {#if computing}
-          <span class="flex items-center gap-1.5 text-neutral-400 dark:text-neutral-500">
+          <span class="flex items-center gap-1.5 text-(--rg-mu)">
             <Icon icon="lucide:loader-circle" width="12" class="animate-spin" />
             {$t("rename.computing")}
           </span>
         {:else if preview}
-          <span class="flex items-center gap-1.5 text-neutral-600 dark:text-neutral-300">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          <span class="flex items-center gap-1.5 font-semibold text-(--rg-tx2)">
+            <span class="w-1.5 h-1.5 rounded-full bg-(--rg-g)"></span>
             <!-- Dénominateur seulement si l'on a décoché : sinon il n'apprend rien. -->
             {selected.length}{#if !allSelected} / {changeable.length}{/if}
             {$t("rename.will_change")}
           </span>
           {#if preview.blocked > 0}
-            <span class="text-red-500">{preview.blocked} {$t("rename.blocked")}</span>
+            <span class="font-semibold text-red-600 dark:text-red-400">{preview.blocked} {$t("rename.blocked")}</span>
           {/if}
           {#if preview.unchanged > 0}
-            <span class="text-neutral-400 dark:text-neutral-500">
+            <span class="text-(--rg-mu)">
               {preview.unchanged} {$t("rename.already_ok")}
             </span>
           {/if}

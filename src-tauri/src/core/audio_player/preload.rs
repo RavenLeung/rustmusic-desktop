@@ -72,8 +72,8 @@ pub struct PreloadedTrack {
     pub samples: Vec<f32>,
     /// Durée en secondes, pour mettre à jour la barre de progression.
     pub duration_secs: f64,
-    /// Facteur Replay Gain de CETTE piste, publié à la promotion.
-    pub gain: f32,
+    /// Tags Replay Gain de CETTE piste ; le gain est calculé à la promotion.
+    pub rg: replay_gain::ReplayGainInfo,
 }
 
 /// État global du préchargement (une seule lecture à la fois dans l'app).
@@ -181,19 +181,85 @@ pub fn take_ready() -> Option<PreloadedTrack> {
     taken
 }
 
+/// Ce que laisse un enchaînement fait dans le callback audio : le fil de
+/// contrôle met à jour durée, chemin et interface, et libère l'ancien tampon.
+pub struct Promotion {
+    pub path: PathBuf,
+    pub duration_secs: f64,
+    /// Échantillons de la piste finie, libérés hors du fil temps réel.
+    pub old_samples: Vec<f32>,
+}
+
+static PROMOTION: Mutex<Option<Promotion>> = Mutex::new(None);
+
+/// Enchaînement depuis le callback audio, quand le curseur atteint la fin de
+/// `buffer`. Jamais bloquant, et sans allocation : un verrou pris ou rien de
+/// prêt, et le fil de contrôle enchaîne lui-même comme avant.
+pub fn promote_from_callback(buffer: &mut Vec<f32>) -> bool {
+    let Ok(mut promotion) = PROMOTION.try_lock() else {
+        return false;
+    };
+    if promotion.is_some() {
+        return false;
+    }
+    let Ok(mut st) = STATE.try_lock() else {
+        return false;
+    };
+    // Comparé sans copier le chemin : une allocation n'a rien à faire ici.
+    let annonce = matches!((&st.ready, &st.next_path), (Some(t), Some(p)) if t.path == *p);
+    if !annonce {
+        return false;
+    }
+    let Some(next) = st.ready.take() else {
+        return false;
+    };
+    st.next_path = None;
+    drop(st);
+    GENERATION.fetch_add(1, Ordering::Relaxed);
+
+    let mut next = next;
+    std::mem::swap(buffer, &mut next.samples);
+    replay_gain::promote(next.rg);
+    *promotion = Some(Promotion {
+        path: next.path,
+        duration_secs: next.duration_secs,
+        old_samples: next.samples,
+    });
+    true
+}
+
+/// Un enchaînement du callback attend encore son suivi.
+pub fn promotion_pending() -> bool {
+    PROMOTION.lock().unwrap_or_else(|e| e.into_inner()).is_some()
+}
+
+/// Ce qu'a laissé un enchaînement fait dans le callback audio.
+pub fn take_promotion() -> Option<Promotion> {
+    PROMOTION.lock().unwrap_or_else(|e| e.into_inner()).take()
+}
+
 /// Jette le décodage en cours mais **conserve** l'annonce : utilisé en fin de
 /// piste, quand le frontend n'a pas encore eu le temps d'annoncer la suite.
 pub fn abort_current_decode() {
     lock().ready = None;
     GENERATION.fetch_add(1, Ordering::Relaxed);
+    forget_promotion();
+}
+
+/// Un enchaînement fait par le callback juste avant l'arrêt n'appartient pas à
+/// la lecture suivante : elle le prendrait pour le sien.
+fn forget_promotion() {
+    PROMOTION.lock().unwrap_or_else(|e| e.into_inner()).take();
 }
 
 /// Vide entièrement la réserve (stop, changement manuel de piste).
 pub fn reset() {
+    log::debug!("📦 Préchargement : reset complet");
     let mut st = lock();
     st.next_path = None;
     st.ready = None;
     drop(st);
+    forget_promotion();
     GENERATION.fetch_add(1, Ordering::Relaxed);
 }
 
@@ -208,8 +274,10 @@ pub fn run_preload(format: StreamFormat, is_stopped: Arc<AtomicBool>) {
     let generation = GENERATION.load(Ordering::Relaxed);
 
     let Some(path) = announced_next() else {
+        log::debug!("📦 Préchargement : rien d'annoncé au lancement (génération {generation})");
         return;
     };
+    log::debug!("📦 Préchargement lancé : {} (génération {generation})", path.display());
 
     match decode_track(&path, format, &is_stopped, generation) {
         Ok(Some(track)) => {
@@ -229,7 +297,12 @@ pub fn run_preload(format: StreamFormat, is_stopped: Arc<AtomicBool>) {
                 st.ready = Some(track);
             }
         }
-        Ok(None) => {} // Incompatible ou annulé : pas d'enchaînement, sans bruit.
+        Ok(None) => log::debug!(
+            "📦 Préchargement sans résultat (annulé, incompatible ou vide) : {} (génération {} → {})",
+            path.display(),
+            generation,
+            GENERATION.load(Ordering::Relaxed)
+        ),
         Err(e) => log::debug!("📦 Préchargement de {} abandonné : {e}", path.display()),
     }
 }
@@ -261,13 +334,12 @@ fn decode_track(
         )
         .map_err(|e| format!("probe : {e}"))?;
 
-    // Replay Gain : calculé ici, publié seulement à la promotion.
-    let gain = reader
+    // Replay Gain : tags lus ici, gain calculé à la promotion (réglages du moment).
+    let rg = reader
         .metadata()
         .current()
         .map(replay_gain::from_metadata)
-        .map(replay_gain::factor_for)
-        .unwrap_or(1.0);
+        .unwrap_or_default();
 
     let track = reader
         .tracks()
@@ -389,6 +461,21 @@ fn decode_track(
         }
     }
 
+    // Ce que le rééchantillonneur retient encore : fin du dernier bloc et délai du filtre.
+    if let Some(rs) = resampler.as_mut() {
+        let tail = rs.finish();
+        if !tail.is_empty() {
+            if channels as u16 != fmt.output_channels {
+                let mut out =
+                    vec![0.0f32; (tail.len() / channels) * fmt.output_channels as usize];
+                adapt_channels(&tail, channels, &mut out, fmt.output_channels.into());
+                samples.extend_from_slice(&out);
+            } else {
+                samples.extend_from_slice(&tail);
+            }
+        }
+    }
+
     if samples.is_empty() {
         return Ok(None);
     }
@@ -400,7 +487,7 @@ fn decode_track(
         path: path.to_path_buf(),
         samples,
         duration_secs: actual_secs,
-        gain,
+        rg,
     }))
 }
 

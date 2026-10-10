@@ -19,7 +19,10 @@
     "new": "Nueva",
     "default": "Predet.",
     "set_default": "Definir como biblioteca predeterminada",
-    "default_hint": "Se abre al iniciar"
+    "default_hint": "Se abre al iniciar",
+    "rename": "Renombrar",
+    "rename_desc": "Cambiar el nombre de la biblioteca",
+    "rename_title": "Renombrar la biblioteca"
   },
   "home": {
     "ready": "Listo para escuchar",
@@ -246,7 +249,9 @@
     "history_cleared_desc": "Se han eliminado las canciones recientes",
     "plays_n": "{n} reproducciones",
     "plays_one": "{n} reproducción",
-    "rules": "Reglas"
+    "rules": "Reglas",
+    "sort_order": "Orden",
+    "sort_album": "Álbum"
   },
   "actions": {
     "play_now": "Reproducir ahora",
@@ -752,7 +757,9 @@
     "accent_pink": "Rosa",
     "accent_red": "Rojo",
     "accent_orange": "Naranja",
-    "accent_amber": "Ámbar"
+    "accent_amber": "Ámbar",
+    "sidebar_playlists": "Playlists",
+    "sidebar_playlists_desc": "Tus playlists fijadas, Canciones que te gustan y Escuchadas recientemente"
   },
   "about": {
     "title": "Acerca de",
@@ -1331,6 +1338,7 @@
     "add_files_desc": "Algunas pistas, sin carpeta",
     "folders": "Carpetas vigiladas",
     "covers": "Obtener carátulas",
+    "covers_desc": "Portadas que faltan, desde Deezer",
     "covers_missing_one": "1 álbum sin carátula",
     "covers_missing_n": "{n} álbumes sin carátula",
     "covers_ok": "Todos los álbumes tienen carátula",

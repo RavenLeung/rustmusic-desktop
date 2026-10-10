@@ -89,112 +89,102 @@
 <!-- Backdrop -->
 <button
   type="button"
-  class="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-xl cursor-default"
+  class="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm cursor-default"
   onclick={onclose}
   aria-label={$t("common.close")}
   transition:fade={{ duration: 150 }}
 ></button>
 
-<!-- Modal -->
+<!-- Modal : même habillage que Popin -->
 <div
   class="fixed inset-0 z-[10000] flex items-center justify-center p-6 pointer-events-none"
 >
   <div
     class="relative w-full max-w-2xl h-[75vh] pointer-events-auto
-           bg-neutral-950 border border-white/6
-           rounded-3xl
-           shadow-[0_24px_80px_rgba(0,0,0,0.6)]
-           flex flex-col overflow-hidden"
-    transition:scale={{ duration: 200, start: 0.95 }}
+           flex flex-col overflow-hidden rounded-2xl text-(--rg-tx)
+           bg-(--rg-carte) border border-(--rg-bd) dark:border-[#2a312d]
+           shadow-[0_24px_60px_-12px_rgba(0,0,0,0.25)] dark:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.9)]"
+    transition:scale={{ duration: 180, start: 0.96 }}
   >
 
-    <!-- Glow top -->
-    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-80 h-32 rounded-full blur-[80px] opacity-15 pointer-events-none bg-green-500"></div>
-
     <!-- Header -->
-    <div class="relative px-6 pt-5 pb-4">
-      <div class="flex items-center justify-between mb-4">
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-xl bg-green-500/10 border border-green-500/15
-                      flex items-center justify-center">
-            <Icon icon="lucide:disc-album" width={14} class="text-green-400" />
-          </div>
-          <div>
-            <h2 class="text-sm font-bold text-white">{$t("popins.cover_search_title")}</h2>
-            <p class="text-[10px] text-neutral-500">{$t("popins.cover_search_source")}</p>
+    <div class="shrink-0 px-6 pt-5 pb-4 border-b border-(--rg-bd)
+                bg-linear-135 from-(--rg-g)/8 to-transparent to-60%">
+      <div class="flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <span class="shrink-0 w-8 h-8 rounded-[9px] flex items-center justify-center
+                       bg-(--rg-gbg) text-(--rg-g) border border-(--rg-gbd)">
+            <Icon icon="lucide:disc-album" width="15" />
+          </span>
+          <div class="min-w-0">
+            <h2 class="truncate text-[17px] font-extrabold tracking-[-0.01em] text-(--rg-tx)">{$t("popins.cover_search_title")}</h2>
+            <p class="text-[11px] text-(--rg-mu)">{$t("popins.cover_search_source")}</p>
           </div>
         </div>
 
         <button
           type="button"
-          class="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer
-                 bg-white/5 border border-white/6
-                 text-neutral-400 hover:text-white hover:bg-white/10
-                 transition-all duration-200"
+          class="shrink-0 -mr-1.5 w-8 h-8 rounded-[9px] flex items-center justify-center cursor-pointer
+                 text-(--rg-mu) hover:text-(--rg-tx) hover:bg-(--rg-hover) transition-colors"
           onclick={onclose}
           aria-label={$t("common.close")}
           title={$t("common.close")}
         >
-          <Icon icon="lucide:x" width={14} />
-        </button>
-      </div>
-
-      <!-- Search bar -->
-      <div class="flex items-center gap-2">
-        <div class="relative flex-1">
-          <Icon icon="lucide:search" width={14}
-                class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 pointer-events-none" />
-          <input
-            type="text"
-            bind:value={query}
-            placeholder={$t("popins.cover_search_placeholder")}
-            class="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl
-                   bg-white/4 border border-white/8
-                   text-white placeholder-neutral-500
-                   outline-none focus:border-green-500/30 focus:ring-1 focus:ring-green-500/15
-                   transition-all duration-200"
-          />
-        </div>
-        <button
-          type="button"
-          class="px-4 py-2.5 rounded-xl text-xs font-semibold cursor-pointer
-                 bg-green-500/15 text-green-400 border border-green-500/20
-                 hover:bg-green-500/25 hover:border-green-500/30
-                 transition-all duration-200 disabled:opacity-50"
-          onclick={search}
-          disabled={loading || !query.trim()}
-        >
-          {#if loading}
-            <Icon icon="lucide:loader-2" width={13} class="animate-spin" />
-          {:else}
-            {$t("settings.shortcut_search")}
-          {/if}
+          <Icon icon="lucide:x" width={15} />
         </button>
       </div>
     </div>
 
-    <!-- Separator -->
-    <div class="h-px bg-linear-to-r from-transparent via-white/8 to-transparent"></div>
+    <!-- Search bar -->
+    <div class="shrink-0 flex items-center gap-2 px-6 py-4 border-b border-(--rg-bd) bg-(--rg-creux)">
+      <div class="relative flex-1">
+        <Icon icon="lucide:search" width={16}
+              class="absolute left-3.5 top-1/2 -translate-y-1/2 text-(--rg-mu) pointer-events-none" />
+        <input
+          type="text"
+          bind:value={query}
+          placeholder={$t("popins.cover_search_placeholder")}
+          class="w-full h-11 pl-10 pr-4 text-sm rounded-xl outline-none transition-colors
+                 bg-(--rg-champ) border border-(--rg-bd) text-(--rg-tx) placeholder:text-(--rg-ph)
+                 hover:border-(--rg-bd2) focus:border-(--rg-g)"
+        />
+      </div>
+      <button
+        type="button"
+        class="h-11 min-w-24 px-4 rounded-xl border text-sm font-bold cursor-pointer
+               flex items-center justify-center transition-colors
+               border-(--rg-gbd) bg-(--rg-gbg) text-(--rg-gtx) hover:border-(--rg-g)
+               disabled:opacity-50 disabled:cursor-default"
+        onclick={search}
+        disabled={loading || !query.trim()}
+      >
+        {#if loading}
+          <Icon icon="lucide:loader-2" width={16} class="animate-spin" />
+        {:else}
+          {$t("settings.shortcut_search")}
+        {/if}
+      </button>
+    </div>
 
     <!-- Results -->
-    <div class="flex-1 overflow-y-auto scrollbar-app p-5 min-h-0">
+    <div class="flex-1 overflow-y-auto scrollbar-app px-6 py-5 min-h-0">
       {#if loading}
         <div class="flex items-center justify-center h-full">
           <div class="flex flex-col items-center gap-3">
-            <Icon icon="lucide:loader-2" width={24} class="animate-spin text-green-500/60" />
-            <p class="text-xs text-neutral-500">{$t("popins.searching")}</p>
+            <Icon icon="lucide:loader-2" width={24} class="animate-spin text-(--rg-g)" />
+            <p class="text-[13px] text-(--rg-mu)">{$t("popins.searching")}</p>
           </div>
         </div>
       {:else if results.length === 0}
         <div class="flex flex-col items-center justify-center h-full text-center">
-          <div class="w-16 h-16 rounded-2xl bg-white/3 border border-white/5
-                      flex items-center justify-center mb-4">
-            <Icon icon="lucide:disc-album" width={28} class="text-neutral-600" />
-          </div>
-          <p class="text-sm text-neutral-400 mb-1">
+          <span class="w-16 h-16 rounded-2xl border border-(--rg-bd) bg-(--rg-creux)
+                       flex items-center justify-center mb-4 text-(--rg-mu2)">
+            <Icon icon="lucide:disc-album" width={28} />
+          </span>
+          <p class="text-sm font-semibold text-(--rg-tx2) mb-1">
             {query.trim() ? $t("search.no_result") : $t("popins.cover_search_empty")}
           </p>
-          <p class="text-[11px] text-neutral-600">
+          <p class="text-xs text-(--rg-mu)">
             {query.trim() ? $t("search.no_result_desc") : $t("popins.cover_search_empty_hint")}
           </p>
         </div>
@@ -204,11 +194,11 @@
             {@const isSelected = selected?.cover_xl === result.cover_xl}
             <button
               type="button"
-              class="group flex flex-col rounded-xl overflow-hidden cursor-pointer
-                     transition-all duration-200
+              class="group flex flex-col rounded-2xl overflow-hidden border text-left cursor-pointer
+                     transition-colors duration-200
                      {isSelected
-                       ? 'ring-2 ring-green-500 bg-green-500/8 scale-[1.02]'
-                       : 'bg-white/2 border border-white/5 hover:border-white/15 hover:bg-white/4'}"
+                       ? 'border-(--rg-g) bg-(--rg-creux-on) shadow-[0_0_0_1px_var(--rg-g)]'
+                       : 'border-(--rg-bd) bg-(--rg-creux) hover:border-(--rg-bd2)'}"
               onclick={() => selected = isSelected ? null : result}
               disabled={applying !== null}
             >
@@ -222,10 +212,9 @@
                          transition-transform duration-300"
                 />
                 {#if isSelected}
-                  <div class="absolute inset-0 bg-green-500/10 flex items-center justify-center">
-                    <div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center
-                                shadow-lg shadow-green-500/40">
-                      <Icon icon="lucide:check" width={14} class="text-black" />
+                  <div class="absolute inset-0 bg-(--rg-g)/10 flex items-center justify-center">
+                    <div class="w-8 h-8 rounded-full bg-(--rg-g) text-(--rg-on-g) flex items-center justify-center shadow-lg">
+                      <Icon icon="material-symbols:check-rounded" width={18} />
                     </div>
                   </div>
                 {/if}
@@ -237,12 +226,12 @@
               </div>
 
               <!-- Info -->
-              <div class="px-2.5 py-2 min-w-0">
-                <p class="text-[11px] font-medium truncate
-                          {isSelected ? 'text-green-400' : 'text-neutral-200'}">
+              <div class="px-3 py-2.5 min-w-0">
+                <p class="text-[12px] font-semibold truncate
+                          {isSelected ? 'text-(--rg-gtx)' : 'text-(--rg-tx)'}">
                   {result.title}
                 </p>
-                <p class="text-[10px] text-neutral-500 truncate">{result.artist}</p>
+                <p class="mt-0.5 text-[11px] text-(--rg-mu) truncate">{result.artist}</p>
               </div>
             </button>
           {/each}
@@ -252,38 +241,33 @@
 
     <!-- Footer -->
     {#if selected}
-      <div class="px-5 py-4 border-t border-white/6
-                  bg-neutral-950/80 backdrop-blur-sm">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3 min-w-0">
-            <img src={selected.cover_small} alt=""
-                 class="w-10 h-10 rounded-lg object-cover shadow-md" />
-            <div class="min-w-0">
-              <p class="text-xs font-medium text-white truncate">{selected.title}</p>
-              <p class="text-[10px] text-neutral-500 truncate">{selected.artist}</p>
-            </div>
+      <div class="shrink-0 flex items-center justify-between gap-3 px-6 py-3.5
+                  border-t border-(--rg-bd) bg-(--rg-creux)">
+        <div class="flex items-center gap-3 min-w-0">
+          <img src={selected.cover_small} alt=""
+               class="w-10 h-10 rounded-lg object-cover border border-(--rg-bd)" />
+          <div class="min-w-0">
+            <p class="text-[13px] font-semibold text-(--rg-tx) truncate">{selected.title}</p>
+            <p class="text-[11px] text-(--rg-mu) truncate">{selected.artist}</p>
           </div>
-
-          <button
-            type="button"
-            class="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold cursor-pointer
-                   bg-green-500 text-black
-                   hover:bg-green-400
-                   active:scale-[0.97]
-                   transition-all duration-150
-                   disabled:opacity-50 disabled:cursor-not-allowed"
-            onclick={applyCover}
-            disabled={applying !== null}
-          >
-            {#if applying}
-              <Icon icon="lucide:loader-2" width={14} class="animate-spin" />
-              {$t("popins.applying")}
-            {:else}
-              <Icon icon="lucide:check" width={14} />
-              {$t("popins.cover_apply")}
-            {/if}
-          </button>
         </div>
+
+        <button
+          type="button"
+          class="shrink-0 h-10 pl-4 pr-5 rounded-xl text-sm font-bold cursor-pointer flex items-center gap-2
+                 bg-(--rg-g) text-(--rg-on-g) hover:brightness-110 transition
+                 disabled:opacity-40 disabled:cursor-default"
+          onclick={applyCover}
+          disabled={applying !== null}
+        >
+          {#if applying}
+            <Icon icon="lucide:loader-2" width={17} class="animate-spin" />
+            {$t("popins.applying")}
+          {:else}
+            <Icon icon="material-symbols:check-rounded" width={17} />
+            {$t("popins.cover_apply")}
+          {/if}
+        </button>
       </div>
     {/if}
   </div>

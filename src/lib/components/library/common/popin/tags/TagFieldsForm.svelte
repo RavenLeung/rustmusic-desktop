@@ -24,11 +24,11 @@
   <div class="space-y-5" aria-hidden="true">
     {#each [2, 4, 2] as rows, group (group)}
       <div class="space-y-2">
-        <div class="h-2 w-20 rounded bg-neutral-200/80 dark:bg-white/8 animate-pulse"></div>
+        <div class="h-2 w-20 rounded bg-(--rg-s2) animate-pulse"></div>
         <div class="space-y-1.5">
           {#each Array.from({ length: rows }) as _, i (i)}
-            <div class="h-12.5 rounded-lg animate-pulse
-                        bg-neutral-100/70 dark:bg-white/4"></div>
+            <div class="h-13 rounded-xl animate-pulse
+                        bg-(--rg-champ) border border-(--rg-bd)"></div>
           {/each}
         </div>
       </div>

@@ -28,11 +28,9 @@
         {disabled}
         placeholder="—"
         class="w-7 bg-transparent text-[13px] tabular-nums leading-tight text-right outline-none
-               text-neutral-900 dark:text-neutral-50
-               placeholder:text-neutral-300 dark:placeholder:text-neutral-700
-               disabled:opacity-50"
+               text-(--rg-tx) placeholder:text-(--rg-ph) disabled:opacity-50"
       />
-      <span class="text-neutral-300 dark:text-neutral-600 select-none text-[13px]">/</span>
+      <span class="text-(--rg-mu2) select-none text-[13px]">/</span>
       <input
         type="text"
         inputmode="numeric"
@@ -41,9 +39,7 @@
         {disabled}
         placeholder="—"
         class="w-7 bg-transparent text-[13px] tabular-nums leading-tight outline-none
-               text-neutral-500 dark:text-neutral-400
-               placeholder:text-neutral-300 dark:placeholder:text-neutral-700
-               disabled:opacity-50"
+               text-(--rg-mu) placeholder:text-(--rg-ph) disabled:opacity-50"
       />
     </div>
   {/snippet}

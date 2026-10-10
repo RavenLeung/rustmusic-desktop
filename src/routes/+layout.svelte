@@ -26,7 +26,6 @@ import { importProgressStore } from "#lib/stores/library/importProgress.store";
 import { settingsStore } from "#lib/stores/settings/settings.store";
 import { sidebarStore } from "#lib/stores/ui/sidebar.store";
 import LibraryTabs from "#lib/components/library/common/LibraryTabs.svelte";
-import LibraryViewControls from "#lib/components/library/common/LibraryViewControls.svelte";
 import { lirePlacement } from "#lib/config/libraryTabs";
 import { taskProgressStore } from "#lib/stores/ui/taskProgress.store";
 import { artistImageReadyStore } from "#lib/stores/library/artistImageReady.store";
@@ -38,6 +37,8 @@ import { trackNotificationService } from "#lib/services/notification/trackNotifi
 import { mediaControlsService } from "#lib/services/mediaControls/mediaControls.service";
 import { onDestroy } from "svelte";
 import { page } from "$app/state";
+import { afterNavigate } from "$app/navigation";
+import { rememberPage } from "#lib/stores/ui/settingsReturn.store";
 import SelectionBar from "#lib/components/ui/selection/SelectionBar.svelte";
 import MiniPlayer from "#lib/components/player/MiniPlayer.svelte";
 import MicroPlayer from "#lib/components/player/MicroPlayer.svelte";
@@ -188,6 +189,9 @@ function goBack() { history.back(); }
 function goForward() { history.forward(); }
 
 // Raccourcis clavier globaux
+// Page à retrouver en sortant des réglages.
+afterNavigate(({ to }) => { if (to) rememberPage(to.url); });
+
 // Couleur d'accent choisie dans Apparence (vide = vert d'origine).
 $effect(() => applyAccent($settingsStore.accent_color));
 
@@ -312,12 +316,8 @@ function handleKeydown(e: KeyboardEvent) {
         <div class="shrink-0 px-3 md:px-6 py-2
                     bg-neutral-100/50 dark:bg-white/2
                     border-y border-neutral-200/60 dark:border-white/6">
-          <div class="flex items-center justify-between gap-2">
-            <LibraryTabs libraryId={($libraryStore.librarySelected?.id as number | undefined) ?? null} />
-            {#if dansLaBibliotheque}
-              <LibraryViewControls />
-            {/if}
-          </div>
+          <!-- Les commandes de vue et de sélection vivent dans chaque page, plus dans cette ligne. -->
+          <LibraryTabs libraryId={($libraryStore.librarySelected?.id as number | undefined) ?? null} />
         </div>
       {/if}
 

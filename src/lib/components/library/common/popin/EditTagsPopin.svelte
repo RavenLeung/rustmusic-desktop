@@ -428,10 +428,8 @@
     {/snippet}
     {#snippet end()}
       <kbd
-        class="hidden sm:block px-1.5 py-0.5 rounded text-[9.5px] font-medium tabular-nums
-               bg-neutral-200/60 dark:bg-white/8
-               text-neutral-400 dark:text-neutral-500
-               ring-1 ring-inset ring-neutral-300/50 dark:ring-white/8"
+        class="hidden sm:block px-1.5 py-0.5 rounded-md text-[10px] font-semibold tabular-nums
+               bg-(--rg-carte) border border-(--rg-bd) text-(--rg-mu)"
       >
         Ctrl ↵
       </kbd>

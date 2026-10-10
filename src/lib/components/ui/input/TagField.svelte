@@ -5,14 +5,12 @@
   // exactement le même rendu : deux copies du style dériveraient à la première
   // retouche.
   //
-  // Un bloc à fond plein, **sans trait de contour** : c'est le fond qui
-  // délimite le champ. Les traits, eux, s'accumulent — douze cadres empilés
-  // donnent une grille de formulaire administratif.
+  // Un bloc de saisie à filet discret, comme les champs des popins : le libellé
+  // vit dedans, ce qui évite une ligne de plus par champ.
   //
-  // Le focus n'ajoute jamais de rectangle : fond teinté, intitulé coloré, halo
-  // diffus. `data-focus-ring` déplace vers ce bloc l'indicateur de contraste
-  // élevé, qui sinon dessinerait un cadre dur autour de la seule saisie
-  // (voir `app.css`).
+  // Le focus n'ajoute jamais de rectangle : filet et intitulé à l'accent.
+  // `data-focus-ring` déplace vers ce bloc l'indicateur de contraste élevé, qui
+  // sinon dessinerait un cadre dur autour de la seule saisie (voir `app.css`).
   import Icon from "@iconify/svelte";
   import { fade } from "svelte/transition";
   import type { Snippet } from "svelte";
@@ -58,15 +56,13 @@
 
 <div
   data-focus-ring="row"
-  class="group relative rounded-lg overflow-hidden transition-all duration-150
-         bg-neutral-100/70 dark:bg-white/4
-         hover:bg-neutral-200/50 dark:hover:bg-white/6
-         focus-within:bg-emerald-500/10
-         focus-within:shadow-lg focus-within:shadow-emerald-500/25"
+  class="group relative rounded-xl overflow-hidden transition-colors duration-150
+         bg-(--rg-champ) border border-(--rg-bd)
+         hover:border-(--rg-bd2) focus-within:border-(--rg-g) focus-within:hover:border-(--rg-g)"
 >
   {#if dirty}
     <span
-      class="absolute left-0 inset-y-0 w-0.75 bg-emerald-500"
+      class="absolute left-0 inset-y-0 w-0.75 bg-(--rg-g)"
       transition:fade={{ duration: 120 }}
     ></span>
   {/if}
@@ -78,10 +74,8 @@
     class="block px-3.5 py-2 {children ? '' : 'cursor-text'}"
   >
     <span
-      class="block text-[10px] font-semibold uppercase tracking-[0.09em] leading-none
-             text-neutral-400 dark:text-neutral-500
-             group-focus-within:text-emerald-600 dark:group-focus-within:text-emerald-400
-             transition-colors"
+      class="block text-[10px] font-bold uppercase tracking-[0.1em] leading-none
+             text-(--rg-mu) group-focus-within:text-(--rg-g) transition-colors"
     >
       {label}
     </span>
@@ -97,10 +91,7 @@
         {placeholder}
         {oninput}
         class="w-full mt-1.5 bg-transparent text-[13px] leading-snug resize-none scrollbar-none
-               outline-none
-               text-neutral-900 dark:text-neutral-50
-               placeholder:text-neutral-300 dark:placeholder:text-neutral-700
-               disabled:opacity-50"
+               outline-none text-(--rg-tx) placeholder:text-(--rg-ph) disabled:opacity-50"
       ></textarea>
     {:else}
       <input
@@ -111,16 +102,14 @@
         {placeholder}
         {oninput}
         class="w-full mt-1.5 bg-transparent leading-tight outline-none
-               text-neutral-900 dark:text-neutral-50
-               placeholder:text-neutral-300 dark:placeholder:text-neutral-700
-               disabled:opacity-50
-               {large ? 'text-[15px] font-medium' : 'text-[13px]'}
+               text-(--rg-tx) placeholder:text-(--rg-ph) disabled:opacity-50
+               {large ? 'text-[15px] font-semibold' : 'text-[13px]'}
                {dirty ? 'pr-8' : ''}"
       />
     {/if}
 
     {#if warning}
-      <span class="mt-1 flex items-center gap-1 text-[10px] text-amber-500">
+      <span class="mt-1 flex items-center gap-1 text-[10px] font-medium text-(--rg-am)">
         <Icon icon="lucide:triangle-alert" width="10" class="shrink-0" />
         {warning}
       </span>
@@ -133,11 +122,9 @@
       onclick={onrevert}
       title={revertLabel}
       aria-label={revertLabel}
-      class="absolute right-2 w-6 h-6 rounded-md cursor-pointer
-             flex items-center justify-center
-             text-neutral-400 dark:text-neutral-500
-             hover:text-emerald-600 dark:hover:text-emerald-400
-             hover:bg-emerald-500/15 transition-colors
+      class="absolute right-2 w-6 h-6 rounded-lg cursor-pointer
+             flex items-center justify-center transition-colors
+             text-(--rg-mu2) hover:text-(--rg-g) hover:bg-(--rg-gbg)
              {multiline ? 'top-1.5' : 'top-1/2 -translate-y-1/2'}"
     >
       <Icon icon="lucide:rotate-ccw" width="12" />

@@ -10,7 +10,7 @@
 
 <div
   class="flex items-center gap-2.5 px-2 py-1 rounded-md
-         {on ? 'bg-emerald-500/10' : ''}
+         {on ? 'bg-(--rg-gbg)/60' : ''}
          {cell.state === 'differs' ? '' : 'opacity-55'}"
 >
   {#if cell.state === 'differs'}
@@ -26,20 +26,19 @@
       <Icon
         icon={cell.state === 'same' ? 'lucide:check' : 'lucide:minus'}
         width="10"
-        class="text-neutral-300 dark:text-neutral-600"
+        class="text-(--rg-mu2)"
       />
     </span>
   {/if}
 
-  <span class="shrink-0 w-24 text-[11px] truncate
-               text-neutral-500 dark:text-neutral-400">
+  <span class="shrink-0 w-24 text-[11px] font-semibold truncate text-(--rg-mu)">
     {$t(`tags.${cell.field}`)}
   </span>
 
   <span class="flex-1 min-w-0 text-[11.5px] truncate
                {cell.from
-                 ? 'text-neutral-600 dark:text-neutral-300'
-                 : 'italic text-neutral-400 dark:text-neutral-600'}"
+                 ? 'text-(--rg-tx2)'
+                 : 'italic text-(--rg-mu2)'}"
         title={cell.from}>
     {cell.from || $t('workshop.was_empty')}
   </span>
@@ -48,18 +47,18 @@
     icon="lucide:arrow-right"
     width="10"
     class="shrink-0 {cell.state === 'differs'
-      ? 'text-neutral-300 dark:text-neutral-600'
+      ? 'text-(--rg-mu2)'
       : 'text-transparent'}"
   />
 
   <span class="flex-1 min-w-0 text-[11.5px] truncate
                {cell.state === 'differs'
                  ? on
-                   ? 'font-medium text-emerald-600 dark:text-emerald-400'
-                   : 'text-neutral-500 dark:text-neutral-400'
+                   ? 'font-semibold text-(--rg-gtx)'
+                   : 'text-(--rg-tx2)'
                  : cell.state === 'same'
-                   ? 'text-neutral-400 dark:text-neutral-500'
-                   : 'italic text-neutral-400 dark:text-neutral-600'}"
+                   ? 'text-(--rg-mu)'
+                   : 'italic text-(--rg-mu2)'}"
         title={cell.to}>
     {cell.state === 'absent' ? $t('source.not_provided') : cell.to}
   </span>

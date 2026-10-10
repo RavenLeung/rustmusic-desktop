@@ -581,6 +581,22 @@ pub async fn set_default_library(
         .map_err(|e| format!("Failed to set default library: {}", e))
 }
 
+/// Renomme une bibliothèque ; un nom déjà pris dans le profil est refusé (UNIQUE).
+#[tauri::command]
+pub async fn rename_library(
+    state: State<'_, AppState>,
+    library_id: i64,
+    name: String,
+) -> Result<(), String> {
+    let name = name.trim();
+    if name.is_empty() {
+        return Err("Nom vide".to_string());
+    }
+    LibraryRepository::rename(&state.pool, library_id, name)
+        .await
+        .map_err(|e| format!("Failed to rename library: {}", e))
+}
+
 #[tauri::command]
 pub async fn get_library(
     state: State<'_, AppState>, 

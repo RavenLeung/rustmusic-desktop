@@ -5,8 +5,17 @@
   import { profilSelector } from "#lib/stores/profil/profil.store";
   import Icon from "@iconify/svelte";
   import { t } from "#lib/i18n";
+  import FormField from "#lib/components/ui/input/FormField.svelte";
+  import FormInput from "#lib/components/ui/input/FormInput.svelte";
+  import PopinFooter from "#lib/components/ui/popin/PopinFooter.svelte";
+  import type { Library } from "#lib/types/db/library/Library";
 
-  let name = $state("");
+  // Avec `library` : renommer, sans description.
+  let { library = null }: { library?: Library | null } = $props();
+
+  // Valeur de départ seulement : la saisie prend la suite.
+  // svelte-ignore state_referenced_locally
+  let name = $state(library?.name ?? "");
   let description = $state("");
   let isSubmitting = $state(false);
   let errorName: string | null = $state(null);
@@ -29,6 +38,11 @@
     }
     isSubmitting = true;
     try {
+      if (library) {
+        if (name.trim() !== library.name) await libraryStore.rename(library, name);
+        close();
+        return;
+      }
       const profilId = $profilSelector.profilSelected?.id;
       if (!profilId) throw new Error("NO_PROFIL");
 
@@ -49,123 +63,48 @@
   }
 </script>
 
-<div class="space-y-5">
-
-  <!-- Preview -->
-  <div class="flex items-center gap-4 p-3 rounded-xl
-              bg-emerald-500/5 dark:bg-emerald-500/8">
-    <div class="w-12 h-12 rounded-xl shrink-0 flex items-center justify-center
-                bg-emerald-500/15 border border-emerald-500/20">
-      <Icon icon="lucide:library" width="20" height="20"
-            class="text-emerald-500" />
-    </div>
+<div class="space-y-6">
+  <!-- La bibliothèque telle qu'elle apparaîtra -->
+  <div class="flex items-center gap-4 p-3.5 rounded-2xl border border-(--rg-gbd) bg-linear-135 from-(--rg-gbg) to-transparent">
+    <span class="w-12 h-12 shrink-0 rounded-xl flex items-center justify-center bg-(--rg-gbg) border border-(--rg-gbd) text-(--rg-g)">
+      <Icon icon="material-symbols:library-music-outline-rounded" width="24" />
+    </span>
     <div class="min-w-0">
-      <p class="text-sm font-semibold text-neutral-900 dark:text-neutral-100 truncate">
-        {name.trim() || $t('library.create_library')}
+      <p class="text-[15px] font-bold truncate text-(--rg-tx)">
+        {name.trim() || (library?.name ?? $t('library.create_library'))}
       </p>
-      <p class="text-xs text-neutral-500 dark:text-neutral-400">
-        {$t("home.tracks_n").replace("{n}", "0")} · {$t("nav.library")}
+      <p class="mt-0.5 text-xs text-(--rg-mu)">
+        {$t("home.tracks_n").replace("{n}", String(library?.total_tracks ?? 0))} · {$t("nav.library")}
       </p>
     </div>
   </div>
 
-  <!-- Séparateur -->
-  <div class="h-px bg-neutral-200 dark:bg-neutral-700/50"></div>
+  <FormField label={$t("popins.library_name")} for="lib_name" required error={errorName ? $t(errorName) : ""}>
+    <FormInput id="lib_name" bind:value={name} placeholder={$t("popins.library_name_placeholder")}
+               invalid={!!errorName} disabled={isSubmitting} oninput={resetErrors} onenter={submit} />
+  </FormField>
 
-  <!-- Nom -->
-  <div class="flex flex-col gap-1.5">
-    <label for="lib_name" class="text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-      {$t("popins.library_name")} <span class="text-red-500">*</span>
-    </label>
-    <input
-      id="lib_name"
-      class="w-full rounded-xl border px-4 py-3 text-sm
-             bg-neutral-50 dark:bg-neutral-800/80
-             text-neutral-900 dark:text-neutral-100
-             placeholder-neutral-400 dark:placeholder-neutral-500
-             transition-all duration-200
-             focus:outline-none focus:ring-2 focus:border-transparent
-             {errorName
-               ? 'border-red-400/60 focus:ring-red-500/40'
-               : 'border-neutral-200 dark:border-neutral-700 focus:ring-emerald-500/40 hover:border-neutral-300 dark:hover:border-neutral-600'}"
-      placeholder={$t("popins.library_name_placeholder")}
-      bind:value={name}
-      oninput={resetErrors}
-      disabled={isSubmitting}
-    />
-    {#if errorName}
-      <p class="flex items-center gap-1.5 text-xs text-red-500">
-        <Icon icon="heroicons:exclamation-circle" class="w-3.5 h-3.5 shrink-0" />
-        {$t(errorName)}
-      </p>
-    {/if}
-  </div>
-
-  <!-- Description -->
-  <div class="flex flex-col gap-1.5">
-    <label for="lib_desc" class="text-[11px] font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-      {$t("forms.description")} <span class="normal-case font-normal tracking-normal">{$t("forms.optional")}</span>
-    </label>
-    <textarea id="lib_desc"
-      class="w-full rounded-xl border px-4 py-3 text-sm resize-none
-             bg-neutral-50 dark:bg-neutral-800/80
-             text-neutral-900 dark:text-neutral-100
-             placeholder-neutral-400 dark:placeholder-neutral-500
-             border-neutral-200 dark:border-neutral-700
-             transition-all duration-200
-             hover:border-neutral-300 dark:hover:border-neutral-600
-             focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-transparent"
-      placeholder={$t("forms.description_placeholder")}
-      rows="2"
-      bind:value={description}
-      disabled={isSubmitting}
-    ></textarea>
-  </div>
-
-  <!-- Erreur globale -->
-  {#if globalError}
-    <div class="flex items-center gap-2.5 rounded-xl border
-                bg-red-50 border-red-200 dark:bg-red-900/15 dark:border-red-800/50
-                px-4 py-3">
-      <Icon icon="heroicons:exclamation-triangle" class="w-4 h-4 shrink-0 text-red-500" />
-      <p class="text-sm text-red-600 dark:text-red-400">{$t(globalError)}</p>
-    </div>
+  {#if !library}
+    <FormField label={$t("forms.description")} for="lib_desc" optional={$t("forms.optional")}>
+      <FormInput id="lib_desc" multiline bind:value={description} placeholder={$t("forms.description_placeholder")} disabled={isSubmitting} />
+    </FormField>
   {/if}
 
-  <!-- Actions -->
-  <div class="flex justify-end gap-3 pt-1">
-    <button
-      type="button"
-      class="px-4 py-2 rounded-lg text-sm font-medium cursor-pointer
-            text-neutral-500 dark:text-neutral-400
-            hover:text-neutral-700 dark:hover:text-neutral-200
-            hover:bg-neutral-100 dark:hover:bg-neutral-800
-            transition-all duration-150
-            disabled:opacity-50 disabled:cursor-not-allowed"
-      onclick={close}
-      disabled={isSubmitting}
-    >
-      {$t('common.cancel')}
-    </button>
-
-    <button
-      type="button"
-      class="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold cursor-pointer
-            bg-emerald-600 text-white shadow-sm shadow-emerald-900/20
-            hover:bg-emerald-500 hover:shadow-md hover:shadow-emerald-900/25
-            active:bg-emerald-700 active:shadow-none active:scale-[0.97]
-            transition-all duration-150
-            disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
-      onclick={submit}
-      disabled={isSubmitting}
-    >
-      {#if isSubmitting}
-        <Icon icon="lucide:loader-2" width="14" height="14" class="animate-spin" />
-        {$t('common.loading')}
-      {:else}
-        <Icon icon="lucide:plus" width="14" height="14" />
-        {$t('library.create_library')}
-      {/if}
-    </button>
-  </div>
+  {#if globalError}
+    <p class="flex items-center gap-2 px-4 py-3 rounded-xl border border-red-500/25 bg-red-500/8 text-sm text-red-600 dark:text-red-400">
+      <Icon icon="material-symbols:warning-outline-rounded" width="17" class="shrink-0" />
+      {$t(globalError)}
+    </p>
+  {/if}
 </div>
+
+<PopinFooter
+  bleed
+  cancelLabel={$t("common.cancel")}
+  oncancel={close}
+  cancelDisabled={isSubmitting}
+  submitLabel={library ? $t("selector.rename") : $t("library.create_library")}
+  submitIcon={library ? "material-symbols:check-rounded" : "material-symbols:add-rounded"}
+  onsubmit={submit}
+  busy={isSubmitting}
+/>

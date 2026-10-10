@@ -21,6 +21,7 @@
     type WorkshopField,
   } from "#lib/stores/tags/tagWorkshop.store";
   import { cleanTags, CLEAN_RULES, type CleanRule } from "#lib/services/tags/rename.service";
+  import PopinFooter from "#lib/components/ui/popin/PopinFooter.svelte";
 
   /* eslint-disable svelte/valid-prop-names-in-kit-pages */
   const {} = $props();
@@ -95,64 +96,67 @@
 </script>
 
 <div class="flex-1 min-h-0 flex flex-col">
-  <div class="shrink-0 px-4 py-3 space-y-2
-              border-b border-neutral-200/70 dark:border-white/8
-              bg-neutral-50/70 dark:bg-black/20">
-    <div class="flex flex-wrap gap-1.5">
+  <!-- Règles à cocher -->
+  <div class="shrink-0 px-6 pt-5 pb-4 space-y-3 border-b border-(--rg-bd) bg-(--rg-creux)">
+    <div class="flex flex-wrap gap-2">
       {#each CLEAN_RULES as rule (rule)}
+        {@const on = rules.includes(rule)}
         <button
           type="button"
           onclick={() => toggle(rule)}
-          class="px-2.5 h-7 rounded-lg text-[11.5px] cursor-pointer transition-colors
-                 {rules.includes(rule)
-                   ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-medium'
-                   : 'bg-neutral-200/60 dark:bg-white/6 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-300/60 dark:hover:bg-white/10'}"
+          aria-pressed={on}
+          class="flex items-center gap-1.5 h-8 px-3 rounded-xl border text-[12.5px] cursor-pointer transition-colors
+                 {on
+                   ? 'border-(--rg-gbd) bg-(--rg-gbg) text-(--rg-gtx) font-semibold'
+                   : 'border-(--rg-bd) bg-(--rg-champ) text-(--rg-tx2) font-medium hover:border-(--rg-bd2) hover:text-(--rg-tx)'}"
         >
+          {#if on}
+            <Icon icon="material-symbols:check-rounded" width="15" class="-ml-0.5 text-(--rg-g)" />
+          {/if}
           {$t(`clean.rule.${rule}`)}
         </button>
       {/each}
     </div>
-    <p class="text-[10.5px] leading-relaxed text-neutral-400 dark:text-neutral-500">
+    <p class="flex gap-2 text-xs leading-relaxed text-(--rg-mu) text-pretty">
+      <Icon icon="material-symbols:info-outline-rounded" width="15" class="shrink-0 mt-px text-(--rg-mu2)" />
       {$t("clean.hint")}
     </p>
   </div>
 
-  <div class="flex-1 min-h-0 overflow-y-auto scrollbar-none px-3 py-2.5">
+  <div class="flex-1 min-h-0 overflow-y-auto scrollbar-app px-6 py-4">
     {#if error}
-      <p class="flex items-start gap-2 px-3 py-2.5 rounded-lg text-[12px]
-                bg-red-500/10 text-red-500" transition:fade={{ duration: 120 }}>
-        <Icon icon="lucide:alert-triangle" width="13" class="shrink-0 mt-0.5" />
+      <p class="flex items-start gap-2 px-4 py-3 rounded-xl border border-red-500/25 bg-red-500/8
+                text-sm text-red-600 dark:text-red-400" transition:fade={{ duration: 120 }}>
+        <Icon icon="material-symbols:warning-outline-rounded" width="17" class="shrink-0 mt-px" />
         <span class="min-w-0">{error}</span>
       </p>
-    {:else if rules.length === 0}
-      <p class="py-16 text-center text-[12.5px] text-neutral-400 dark:text-neutral-500">
-        {$t("clean.pick_rule")}
-      </p>
-    {:else if proposals.length === 0}
-      <p class="py-16 text-center text-[12.5px] text-neutral-400 dark:text-neutral-500">
-        {computing ? $t("rename.computing") : $t("clean.nothing")}
-      </p>
+    {:else if rules.length === 0 || proposals.length === 0}
+      <!-- État vide : aucune règle, calcul en cours, ou rien à changer -->
+      <div class="flex flex-col items-center justify-center gap-3 py-16 text-center">
+        <span class="w-12 h-12 rounded-2xl flex items-center justify-center border border-(--rg-bd) bg-(--rg-creux) text-(--rg-mu)">
+          <Icon icon={computing ? "lucide:loader-2" : "lucide:sparkles"} width="22" class={computing ? "animate-spin" : ""} />
+        </span>
+        <p class="text-[13px] text-(--rg-mu)">
+          {rules.length === 0 ? $t("clean.pick_rule") : computing ? $t("rename.computing") : $t("clean.nothing")}
+        </p>
+      </div>
     {:else}
-      <div class="space-y-0.5">
+      <div class="space-y-1.5">
         {#each proposals as p (p.path + p.field)}
-          <div class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/8">
-            <span class="shrink-0 w-32 text-[10.5px] truncate
-                         text-neutral-400 dark:text-neutral-500"
-                  title={fileName(p.path)}>
+          <div class="flex items-center gap-3 px-3.5 py-2 rounded-xl border border-(--rg-bd) bg-(--rg-creux)">
+            <span class="shrink-0 w-32 text-[11px] truncate text-(--rg-mu)" title={fileName(p.path)}>
               {fileName(p.path)}
             </span>
-            <span class="shrink-0 w-20 text-[10.5px] truncate
-                         text-neutral-500 dark:text-neutral-400">
-              {$t(`tags.${p.field}`)}
+            <span class="shrink-0 w-20 truncate">
+              <span class="px-1.5 py-0.5 rounded-md text-[10.5px] font-semibold bg-(--rg-s2) text-(--rg-tx2)">
+                {$t(`tags.${p.field}`)}
+              </span>
             </span>
-            <span class="flex-1 min-w-0 text-[12px] truncate line-through
-                         text-neutral-400 dark:text-neutral-500" title={p.from}>
+            <span class="flex-1 min-w-0 text-[12.5px] truncate line-through text-(--rg-mu2)" title={p.from}>
               {p.from}
             </span>
-            <Icon icon="lucide:arrow-right" width="10"
-                  class="shrink-0 text-neutral-300 dark:text-neutral-600" />
-            <span class="flex-1 min-w-0 text-[12px] truncate font-medium
-                         text-emerald-600 dark:text-emerald-400" title={p.to}>
+            <Icon icon="material-symbols:arrow-forward-rounded" width="14" class="shrink-0 text-(--rg-mu2)" />
+            <span class="flex-1 min-w-0 text-[12.5px] truncate font-semibold text-(--rg-gtx)" title={p.to}>
               {p.to}
             </span>
           </div>
@@ -161,39 +165,21 @@
     {/if}
   </div>
 
-  <footer
-    class="shrink-0 flex items-center gap-3 px-4 py-2.5
-           border-t border-neutral-200/70 dark:border-white/8
-           bg-neutral-50/80 dark:bg-black/25"
+  <PopinFooter
+    cancelLabel={$t("profil.cancel")}
+    oncancel={() => popinStore.close()}
+    submitLabel={$t("source.apply")}
+    submitIcon="material-symbols:check-rounded"
+    onsubmit={apply}
+    submitDisabled={proposals.length === 0}
   >
-    <span class="flex-1 min-w-0 text-[11.5px] text-neutral-500 dark:text-neutral-400">
+    {#snippet start()}
       {#if proposals.length > 0}
-        {proposals.length} {$t("clean.changes")}
+        <span class="px-2 py-0.5 rounded-lg text-[12px] font-bold tabular-nums bg-(--rg-gbg) text-(--rg-gtx)">
+          {proposals.length}
+        </span>
+        <span class="text-[13px] text-(--rg-tx2)">{$t("clean.changes")}</span>
       {/if}
-    </span>
-    <button
-      type="button"
-      onclick={() => popinStore.close()}
-      class="flex items-center gap-1.5 px-3 h-8 rounded-lg text-[13px]
-             cursor-pointer transition-colors
-             text-neutral-600 dark:text-neutral-300
-             hover:bg-neutral-200/70 dark:hover:bg-white/8"
-    >
-      <Icon icon="lucide:x" width="13" />
-      {$t("profil.cancel")}
-    </button>
-    <button
-      type="button"
-      onclick={apply}
-      disabled={proposals.length === 0}
-      class="flex items-center gap-1.5 px-3.5 h-8 rounded-lg text-[13px] font-medium
-             cursor-pointer transition-all
-             bg-emerald-500 text-white
-             hover:bg-emerald-600 hover:shadow-lg hover:shadow-emerald-500/40
-             disabled:opacity-35 disabled:cursor-not-allowed disabled:shadow-none"
-    >
-      <Icon icon="lucide:check" width="13" />
-      {$t("source.apply")}
-    </button>
-  </footer>
+    {/snippet}
+  </PopinFooter>
 </div>

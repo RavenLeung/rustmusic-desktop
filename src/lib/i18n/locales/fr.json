@@ -19,7 +19,10 @@
     "new": "Nouvelle",
     "default": "Défaut",
     "set_default": "Définir comme bibliothèque par défaut",
-    "default_hint": "Ouverte au démarrage"
+    "default_hint": "Ouverte au démarrage",
+    "rename": "Renommer",
+    "rename_desc": "Changer le nom de la bibliothèque",
+    "rename_title": "Renommer la bibliothèque"
   },
   "home": {
     "ready": "Prêt à écouter",
@@ -246,7 +249,9 @@
     "history_cleared_desc": "Les titres récents ont été supprimés",
     "plays_n": "{n} écoutes",
     "plays_one": "{n} écoute",
-    "rules": "Règles"
+    "rules": "Règles",
+    "sort_order": "Ordre",
+    "sort_album": "Album"
   },
   "actions": {
     "play_now": "Lire maintenant",
@@ -752,7 +757,9 @@
     "accent_pink": "Rose",
     "accent_red": "Rouge",
     "accent_orange": "Orange",
-    "accent_amber": "Ambre"
+    "accent_amber": "Ambre",
+    "sidebar_playlists": "Playlists",
+    "sidebar_playlists_desc": "Vos playlists épinglées, Titres likés et Récemment joués"
   },
   "about": {
     "title": "À propos",
@@ -1331,6 +1338,7 @@
     "add_files_desc": "Quelques morceaux, sans dossier",
     "folders": "Dossiers surveillés",
     "covers": "Récupérer les pochettes",
+    "covers_desc": "Pochettes manquantes, depuis Deezer",
     "covers_missing_one": "1 album sans pochette",
     "covers_missing_n": "{n} albums sans pochette",
     "covers_ok": "Chaque album a sa pochette",
