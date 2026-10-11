@@ -18,6 +18,7 @@
     { value: "es", label: "Español" },
     { value: "de", label: "Deutsch" },
     { value: "it", label: "Italiano" },
+    { value: "zh", label: "简体中文" },
   ];
 
   const groupes = $derived.by((): { titre: string; hint: string; items: Interrupteur[] }[] => {

@@ -148,15 +148,18 @@ fn titre(menu: Menu, langue: &str) -> &'static str {
         (Menu::Artistes, "es") => "Artistas",
         (Menu::Artistes, "de") => "Künstler",
         (Menu::Artistes, "it") => "Artisti",
+        (Menu::Artistes, "zh") => "艺术家",
         (Menu::Artistes, _) => "Artists",
         (Menu::Albums, "es") => "Álbumes",
         (Menu::Albums, "de") => "Alben",
         (Menu::Albums, "it") => "Album",
+        (Menu::Albums, "zh") => "专辑",
         (Menu::Albums, _) => "Albums",
         (Menu::Dossiers, "fr") => "Dossiers",
         (Menu::Dossiers, "es") => "Carpetas",
         (Menu::Dossiers, "de") => "Ordner",
         (Menu::Dossiers, "it") => "Cartelle",
+        (Menu::Dossiers, "zh") => "文件夹",
         (Menu::Dossiers, _) => "Folders",
     }
 }
@@ -377,6 +380,9 @@ mod tests {
         assert_eq!(titre(Menu::Artistes, "fr"), "Artistes");
         assert_eq!(titre(Menu::Dossiers, "en"), "Folders");
         assert_eq!(titre(Menu::Albums, "de"), "Alben");
+        assert_eq!(titre(Menu::Artistes, "zh"), "艺术家");
+        assert_eq!(titre(Menu::Albums, "zh"), "专辑");
+        assert_eq!(titre(Menu::Dossiers, "zh"), "文件夹");
         // Langue inconnue : anglais.
         assert_eq!(titre(Menu::Dossiers, "pt"), "Folders");
     }
